@@ -483,6 +483,102 @@ html[data-theme="dark"] .field select option[value=""]{color:#8DA1BF}
 #splash.locked .btn-unlock{margin:22px auto 0;display:block}
 #splash.locked .lock-note{margin:0 auto;max-width:330px;text-align:center}
 
+/* ============================================================
+   RESPONSIVE & PLATFORM FIXES
+   ============================================================ */
+
+/* iOS Safari นับ 100vh รวมแถบที่อยู่ที่ซ่อน/แสดงได้ ทำให้เนื้อหาล้นจอ
+   dvh คือความสูงที่มองเห็นจริงและอัปเดตตามการเลื่อน */
+#splash, #gate, #modal, #lightbox{ min-height:100vh; min-height:100dvh; }
+
+html{ -webkit-text-size-adjust:100%; text-size-adjust:100%; }  /* กัน Android ขยายอักษรเอง */
+body{ overflow-x:hidden; overscroll-behavior-y:none; }          /* กันเลื่อนแนวนอนและเด้งหน้าจอ */
+img, svg, canvas{ max-width:100%; }
+
+/* พื้นที่แตะขั้นต่ำ 44px ตามแนวทาง Apple HIG / Material */
+@media(pointer:coarse){
+  .btn, .icon-btn, .mini, .pager button, .file-link{ min-height:44px }
+  .mini{ min-width:44px }
+  .field select, .field input{ min-height:46px }
+  .upload{ min-height:92px }
+}
+
+/* ---------- Tablet (768–1024px) ---------- */
+@media(min-width:761px) and (max-width:1024px){
+  #app{ padding-left:20px; padding-right:20px }
+  .kpi-grid{ grid-template-columns:repeat(4,1fr); gap:12px }
+  .kpi .val{ font-size:26px }
+  .chart-grid{ grid-template-columns:1fr }
+  .cv{ height:250px }
+}
+
+/* ---------- Mobile (≤760px) ---------- */
+@media(max-width:760px){
+  .card-head{ gap:8px }
+  .card-head h2{ width:100%; }
+  .card-head .btn{ flex:1 1 calc(50% - 5px); justify-content:center; padding:11px 12px; font-size:13.5px }
+  .filter-bar{ grid-template-columns:1fr; gap:10px }
+  .tbl-foot{ flex-direction:column; align-items:stretch; gap:10px; text-align:center }
+  .pager{ justify-content:center; flex-wrap:wrap }
+  .toast{ font-size:13.5px }
+  #toasts{ left:12px; right:12px; top:12px; max-width:none }
+}
+
+/* ---------- ตารางบนมือถือ: แปลงเป็นการ์ดรายรายการ ----------
+   ตารางกว้าง 1020px บนจอ 360px ต้องเลื่อนแนวนอนไปมาจนอ่านยาก
+   จึงเปลี่ยนเป็นการ์ดที่มีป้ายกำกับหน้าแต่ละค่า (อ่านได้โดยไม่ต้องเลื่อน) */
+@media(max-width:700px){
+  .table-wrap{ overflow:visible; border:none; background:transparent }
+  .table-wrap table{ min-width:0; width:100%; display:block }
+  .table-wrap thead{ display:none }
+  .table-wrap tbody{ display:block }
+  .table-wrap tbody tr{
+    display:block; margin-bottom:12px; padding:13px 15px; border-radius:14px;
+    background:var(--surface-solid); border:1px solid var(--stroke); box-shadow:var(--shadow);
+  }
+  .table-wrap tbody tr:hover{ background:var(--surface-solid) }
+  .table-wrap tbody td{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:7px 0; border-bottom:1px dashed var(--stroke); text-align:right;
+  }
+  .table-wrap tbody td:last-child{ border-bottom:none; padding-top:11px }
+  .table-wrap tbody td::before{
+    content:attr(data-label); flex:0 0 40%; text-align:left;
+    font-size:12.5px; font-weight:500; color:var(--txt-3);
+  }
+  .table-wrap tbody td .row-act{ justify-content:flex-end; flex-wrap:wrap }
+  .table-wrap tbody td.empty-cell{ display:block; text-align:center }
+  .table-wrap tbody td.empty-cell::before{ content:none }
+}
+
+/* ---------- จอเล็กมาก (≤380px) ---------- */
+@media(max-width:380px){
+  .kpi-grid{ gap:8px }
+  .kpi{ padding:12px }
+  .kpi .val{ font-size:23px }
+  .card-head .btn{ flex:1 1 100% }
+  .gate-box{ padding:26px 18px 22px }
+  #pin{ font-size:24px; letter-spacing:10px; text-indent:10px }
+}
+
+/* ---------- มือถือแนวนอน ---------- */
+@media(max-height:520px) and (orientation:landscape){
+  .gate-box{ padding:20px 22px; max-height:92dvh; overflow-y:auto }
+  .gate-box .logo{ width:52px; height:52px; margin-bottom:8px }
+  .gate-box p{ margin-bottom:14px }
+}
+
+/* ---------- จอใหญ่ (≥1600px) ---------- */
+@media(min-width:1600px){
+  #app{ max-width:1480px }
+  .cv{ height:300px }
+}
+
+/* ---------- ผู้ใช้ที่ตั้งค่าลดการเคลื่อนไหว ---------- */
+@media(prefers-reduced-motion:reduce){
+  .kpi:hover, .btn:hover, .icon-btn:hover{ transform:none }
+}
+
 /* ---- เฉพาะแอปฟอร์ม ---- */
 #app{max-width:900px;padding-bottom:110px}
 
