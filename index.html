@@ -882,7 +882,11 @@ const CONFIG = {
   IMG_QUALITY : 0.72,
   MAX_IMG_BYTES : 2600000,     // ขนาด dataURL ต่อรูปหลังบีบอัด (~2.6MB)
   MAX_PAYLOAD   : 7000000,     // เพดาน payload รวมที่ยอมส่ง (~7MB)
-  POST_TIMEOUT  : 90000        // อัปโหลดรูป 2 ใบบนเน็ตช้าต้องเผื่อเวลาไว้มากพอ
+  POST_TIMEOUT  : 90000,       // อัปโหลดรูป 2 ใบบนเน็ตช้าต้องเผื่อเวลาไว้มากพอ
+  PWA_NAME  : 'Seacon Shop Vehicle Pass',
+  PWA_SHORT : 'ลงทะเบียนรถ',
+  PWA_DESC  : 'แบบฟอร์มลงทะเบียนรถยนต์พนักงานร้านค้า ศูนย์การค้าซีคอนบางแค',
+  PWA_BG    : '#0B2447'
 };
 
 /* ---------- 2) โลโก้ SVG ---------- */
@@ -1099,11 +1103,11 @@ async function initPWA(){
   if(i192) icons.push({src:i192, sizes:'192x192', type:'image/png', purpose:'any maskable'});
   if(i512) icons.push({src:i512, sizes:'512x512', type:'image/png', purpose:'any maskable'});
   const manifest = {
-    name:'Seacon Shop Vehicle Pass',
-    short_name:'Vehicle Pass',
-    description:'ระบบบันทึกข้อมูลรถยนต์พนักงานร้านค้าภายในศูนย์การค้า',
+    name: CONFIG.PWA_NAME || 'Seacon Shop Vehicle Pass',
+    short_name: CONFIG.PWA_SHORT || 'Vehicle Pass',
+    description: CONFIG.PWA_DESC || 'ระบบบันทึกข้อมูลรถยนต์พนักงานร้านค้าภายในศูนย์การค้า',
     start_url:'.', scope:'.', display:'standalone', orientation:'portrait-primary',
-    background_color:'#0B2447', theme_color:'#0B2447', lang:'th', dir:'ltr',
+    background_color: CONFIG.PWA_BG || '#0B2447', theme_color: CONFIG.PWA_BG || '#0B2447', lang:'th', dir:'ltr',
     categories:['business','productivity'], icons
   };
   const url = URL.createObjectURL(new Blob([JSON.stringify(manifest)], {type:'application/manifest+json'}));
