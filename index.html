@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ลงทะเบียนรถยนต์พนักงานร้านค้า | Seacon Shop Vehicle Pass</title>
+<meta name="description" content="แบบฟอร์มลงทะเบียนรถยนต์พนักงานร้านค้า ศูนย์การค้าซีคอนบางแค">
+
+<!-- PWA / Icon (สร้าง manifest + icon เป็น data URL ตอน runtime เพื่อให้เป็นไฟล์เดียวจบ) -->
+<meta name="theme-color" content="#0B2447" id="metaThemeColor">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ลงทะเบียนรถ">
+<meta name="application-name" content="Seacon Vehicle Register">
+<meta name="msapplication-TileColor" content="#0B2447">
+<link rel="manifest" id="manifestLink">
+<link rel="icon" type="image/svg+xml" id="faviconSvg">
+<link rel="apple-touch-icon" id="appleIcon">
+<link rel="mask-icon" id="maskIcon" color="#F2A900">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   1) ตัวแปรธีม (Design Tokens) — อ้างอิง Seacon Brand Identity
+   ทอง/เหลืองมัสตาร์ด + น้ำเงินกรมท่า + ขาว-เทาสว่าง
+   ============================================================ */
+:root{
+  --gold:#F2A900; --gold-2:#FFC93C; --gold-deep:#C98A00;
+  --navy:#0B2447; --navy-2:#17356B; --navy-3:#1E4A8C;
+
+  --bg-1:#EEF2F9; --bg-2:#E3EAF6; --bg-3:#F7F9FC;
+  --surface:rgba(255,255,255,.72);
+  --surface-solid:#FFFFFF;
+  --stroke:rgba(11,36,71,.12);
+  --stroke-strong:rgba(11,36,71,.22);
+  --txt:#0B2447; --txt-2:#40536F; --txt-3:#7A8AA3;
+  --shadow:0 10px 30px rgba(11,36,71,.10);
+  --shadow-lg:0 18px 45px rgba(11,36,71,.16);
+  --blur:16px;
+
+  --ok:#128F5A; --ok-bg:rgba(18,143,90,.12);
+  --warn:#B8760B; --warn-bg:rgba(184,118,11,.14);
+  --err:#C0392B; --err-bg:rgba(192,57,43,.12);
+  --info:#1E4A8C; --info-bg:rgba(30,74,140,.12);
+
+  --radius:20px; --radius-sm:12px;
+  --font:'Prompt','Sarabun',system-ui,-apple-system,'Segoe UI',sans-serif;
+}
+html[data-theme="dark"]{
+  --bg-1:#060F1E; --bg-2:#0A1930; --bg-3:#08152A;
+  --surface:rgba(20,38,68,.62);
+  --surface-solid:#101F3A;
+  --stroke:rgba(255,255,255,.14);
+  --stroke-strong:rgba(255,201,60,.38);
+  --txt:#F4F7FC; --txt-2:#C3D0E4; --txt-3:#8DA1BF;
+  --shadow:0 10px 30px rgba(0,0,0,.45);
+  --shadow-lg:0 20px 50px rgba(0,0,0,.6);
+
+  --ok:#3FD99A; --ok-bg:rgba(63,217,154,.16);
+  --warn:#FFC93C; --warn-bg:rgba(255,201,60,.18);
+  --err:#FF7A6B; --err-bg:rgba(255,122,107,.18);
+  --info:#7FB2FF; --info-bg:rgba(127,178,255,.18);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:var(--font);
+  color:var(--txt);
+  line-height:1.7;               /* กันสระบน-ล่างภาษาไทยถูกตัด */
+  background:var(--bg-1);
+  overflow-x:hidden;
+  transition:background .5s ease,color .35s ease;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+/* พื้นหลังไล่สีแบบ ambient blobs (โทน Seacon) */
+body::before,body::after{
+  content:"";position:fixed;z-index:-1;border-radius:50%;filter:blur(90px);
+  opacity:.55;transition:opacity .5s ease,background .5s ease;pointer-events:none;
+}
+body::before{width:52vmax;height:52vmax;top:-18vmax;right:-14vmax;background:radial-gradient(circle,var(--gold) 0%,transparent 70%);opacity:.28}
+body::after{width:46vmax;height:46vmax;bottom:-16vmax;left:-12vmax;background:radial-gradient(circle,var(--navy-3) 0%,transparent 70%);opacity:.30}
+html[data-theme="dark"] body::before{opacity:.20}
+html[data-theme="dark"] body::after{opacity:.35}
+
+::selection{background:var(--gold);color:#0B2447}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--stroke-strong);border-radius:20px}
+::-webkit-scrollbar-thumb:hover{background:var(--gold)}
+
+/* ============================================================
+   2) Splash / Lock Screen
+   ============================================================ */
+#splash{
+  position:fixed;inset:0;z-index:9000;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:6px;
+  background:linear-gradient(150deg,#071429 0%,#0B2447 45%,#12315F 100%);
+  transition:opacity .8s ease,visibility .8s ease;
+}
+#splash.hide{opacity:0;visibility:hidden}
+#splash::after{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 42%,rgba(242,169,0,.22) 0%,transparent 55%);
+  animation:pulseGlow 3s ease-in-out infinite;
+}
+@keyframes pulseGlow{0%,100%{opacity:.5}50%{opacity:1}}
+.splash-logo{
+  width:150px;height:150px;position:relative;z-index:2;
+  animation:logoIn 1.5s cubic-bezier(.2,.9,.25,1) both;
+  filter:drop-shadow(0 0 26px rgba(242,169,0,.55));
+}
+@keyframes logoIn{
+  0%{opacity:0;transform:scale(.55) translateY(26px) rotate(-8deg)}
+  60%{opacity:1;transform:scale(1.06) translateY(0) rotate(2deg)}
+  100%{opacity:1;transform:scale(1) translateY(0) rotate(0)}
+}
+.splash-title{
+  position:relative;z-index:2;margin-top:18px;font-size:clamp(22px,5.2vw,34px);font-weight:700;
+  letter-spacing:.5px;color:#fff;text-align:center;
+  animation:fadeUp .9s ease .55s both;
+  text-shadow:0 0 24px rgba(242,169,0,.5);
+}
+.splash-title span{color:var(--gold-2)}
+.splash-sub{
+  position:relative;z-index:2;color:#B9C9E4;font-size:clamp(13px,3.4vw,16px);text-align:center;
+  animation:fadeUp .9s ease .85s both;padding:0 22px;
+}
+.splash-dept{
+  position:relative;z-index:2;margin-top:6px;color:#7E93B6;font-size:12.5px;letter-spacing:1.4px;
+  animation:fadeUp .9s ease 1.05s both;text-transform:uppercase;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.splash-bar{
+  position:relative;z-index:2;margin-top:30px;width:min(240px,60vw);height:4px;border-radius:99px;
+  background:rgba(255,255,255,.14);overflow:hidden;animation:fadeUp .8s ease 1.2s both;
+}
+.splash-bar i{display:block;height:100%;width:0;border-radius:99px;
+  background:linear-gradient(90deg,var(--gold),var(--gold-2));box-shadow:0 0 14px var(--gold);
+  animation:loadBar 2.6s ease-in-out forwards}
+@keyframes loadBar{to{width:100%}}
+/* โหมด Lock (เมื่อ idle timeout) — ต่างจาก splash ตรงที่มีปุ่มให้กดกลับเข้าใช้งาน */
+#splash .lock-only{display:none}
+#splash.locked .lock-only{display:block}
+#splash.locked .splash-bar{display:none}
+.btn-unlock{
+  position:relative;z-index:2;margin-top:24px;padding:13px 34px;border:none;cursor:pointer;
+  border-radius:99px;font-family:var(--font);font-size:16px;font-weight:600;color:#0B2447;
+  background:linear-gradient(135deg,var(--gold-2),var(--gold));
+  box-shadow:0 10px 30px rgba(242,169,0,.4);transition:transform .2s ease,box-shadow .2s ease;
+}
+.btn-unlock:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 14px 38px rgba(242,169,0,.55)}
+.lock-note{position:relative;z-index:2;margin-top:12px;color:#8FA5C6;font-size:13px;text-align:center;padding:0 20px}
+
+/* ============================================================
+   3) Layout หลัก
+   ============================================================ */
+#app{opacity:0;transition:opacity .7s ease;padding:18px 16px 60px;max-width:1320px;margin:0 auto}
+#app.show{opacity:1}
+#app.blurred{filter:blur(14px);pointer-events:none}  /* ซ่อนข้อมูลทันทีตอน lock */
+
+.glass{
+  background:var(--surface);
+  -webkit-backdrop-filter:blur(var(--blur)) saturate(160%);
+  backdrop-filter:blur(var(--blur)) saturate(160%);
+  border:1px solid var(--stroke);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  transition:background .45s ease,border-color .45s ease,box-shadow .3s ease,transform .3s ease;
+}
+
+/* Header */
+header.topbar{display:flex;align-items:center;gap:14px;padding:14px 18px;margin-bottom:18px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px;flex:1;min-width:210px}
+.brand .logo{width:50px;height:50px;flex-shrink:0;filter:drop-shadow(0 4px 10px rgba(242,169,0,.35))}
+.brand h1{font-size:clamp(16px,2.6vw,21px);font-weight:700;line-height:1.35}
+.brand h1 small{display:block;font-size:12px;font-weight:400;color:var(--txt-3);letter-spacing:.3px}
+.top-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+
+.icon-btn{
+  width:44px;height:44px;display:grid;place-items:center;cursor:pointer;
+  border-radius:14px;border:1px solid var(--stroke);background:var(--surface);
+  color:var(--txt);font-size:19px;transition:all .25s ease;
+}
+.icon-btn:hover{transform:translateY(-2px);border-color:var(--gold);color:var(--gold);box-shadow:0 8px 20px rgba(242,169,0,.25)}
+.icon-btn:active{transform:scale(.94)}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;
+  padding:11px 20px;border-radius:14px;border:1px solid transparent;
+  font-family:var(--font);font-size:14.5px;font-weight:600;transition:all .25s ease;white-space:nowrap;
+}
+.btn-primary{background:linear-gradient(135deg,var(--gold-2),var(--gold));color:#0B2447;box-shadow:0 8px 22px rgba(242,169,0,.32)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(242,169,0,.45)}
+.btn-navy{background:linear-gradient(135deg,var(--navy-3),var(--navy));color:#fff;box-shadow:0 8px 22px rgba(11,36,71,.3)}
+html[data-theme="dark"] .btn-navy{background:linear-gradient(135deg,#2C5FA8,#17356B)}
+.btn-navy:hover{transform:translateY(-2px)}
+.btn-ghost{background:transparent;border-color:var(--stroke-strong);color:var(--txt-2)}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold);transform:translateY(-2px)}
+.btn-danger{background:linear-gradient(135deg,#E05A4A,#C0392B);color:#fff}
+.btn:disabled{opacity:.55;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+
+/* Spinner ในปุ่ม */
+.spin{width:15px;height:15px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:rot .7s linear infinite;display:none}
+.btn-primary .spin{border-color:rgba(11,36,71,.35);border-top-color:#0B2447}
+.btn.loading .spin{display:block}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+/* ============================================================
+   4) KPI Cards
+   ============================================================ */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.kpi{
+  position:relative;overflow:hidden;padding:18px 18px 16px;border-radius:var(--radius);color:#fff;
+  box-shadow:var(--shadow-lg);transition:transform .3s ease,box-shadow .3s ease;
+}
+.kpi:hover{transform:translateY(-5px)}
+.kpi::after{content:"";position:absolute;right:-22px;top:-22px;width:110px;height:110px;border-radius:50%;background:rgba(255,255,255,.14)}
+.kpi .ic{font-size:22px;opacity:.95}
+.kpi .val{font-size:clamp(26px,4.6vw,34px);font-weight:700;line-height:1.25;margin-top:4px;letter-spacing:.5px}
+.kpi .lb{font-size:13px;opacity:.92;font-weight:400}
+.kpi.k1{background:linear-gradient(135deg,#17356B,#0B2447)}
+.kpi.k2{background:linear-gradient(135deg,#FFC93C,#E09400);color:#3A2600}
+.kpi.k3{background:linear-gradient(135deg,#17A673,#0E6E4C)}
+.kpi.k4{background:linear-gradient(135deg,#4A7BC8,#2A4E8F)}
+
+/* ============================================================
+   5) การ์ด / ฟอร์ม
+   ============================================================ */
+.card{padding:20px;margin-bottom:18px}
+.card-head{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.card-head h2{font-size:17px;font-weight:600;display:flex;align-items:center;gap:9px}
+.card-head h2::before{content:"";width:5px;height:22px;border-radius:6px;background:linear-gradient(180deg,var(--gold-2),var(--gold))}
+.card-head .sp{flex:1}
+
+.form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field.col-2{grid-column:span 2}
+.field label{font-size:13.5px;font-weight:500;color:var(--txt-2)}
+.field label .req{color:var(--err);margin-left:2px}
+.field input,.field select,.field textarea{
+  width:100%;padding:12px 14px;border-radius:var(--radius-sm);
+  border:1.5px solid var(--stroke);background:var(--surface-solid);
+  color:var(--txt);font-family:var(--font);font-size:15px;transition:all .22s ease;
+}
+html[data-theme="dark"] .field input,
+html[data-theme="dark"] .field select,
+html[data-theme="dark"] .field textarea{background:rgba(8,20,40,.7)}
+.field input:focus,.field select:focus,.field textarea:focus{
+  outline:none;border-color:var(--gold);box-shadow:0 0 0 4px rgba(242,169,0,.18);transform:translateY(-1px)
+}
+.field input::placeholder{color:var(--txt-3)}
+.field.invalid input,.field.invalid select{border-color:var(--err);box-shadow:0 0 0 4px rgba(192,57,43,.14)}
+.err-msg{font-size:12.5px;color:var(--err);display:none;line-height:1.5}
+.field.invalid .err-msg{display:block}
+.hint{font-size:12px;color:var(--txt-3)}
+.form-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+
+/* ---- ช่องแนบไฟล์ (Uploader) ---- */
+.upload{
+  position:relative;display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;
+  border:1.6px dashed var(--stroke-strong);border-radius:var(--radius-sm);
+  background:var(--surface-solid);transition:all .22s ease;min-height:74px;
+}
+html[data-theme="dark"] .upload{background:rgba(8,20,40,.55)}
+.upload:hover{border-color:var(--gold);background:rgba(242,169,0,.07);transform:translateY(-1px)}
+.upload input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.upload .uic{width:42px;height:42px;flex-shrink:0;border-radius:11px;display:grid;place-items:center;font-size:19px;
+  background:linear-gradient(135deg,var(--gold-2),var(--gold));color:#0B2447}
+.upload .utx{font-size:13.5px;color:var(--txt-2);line-height:1.5}
+.upload .utx b{display:block;font-size:14px;color:var(--txt);font-weight:600}
+.upload .thumb{width:52px;height:52px;border-radius:10px;object-fit:cover;border:1.5px solid var(--stroke-strong);flex-shrink:0;display:none}
+.upload.has .thumb{display:block}
+.upload.has{border-style:solid;border-color:var(--ok);background:var(--ok-bg)}
+.upload .clr{position:absolute;right:10px;top:10px;z-index:3;width:26px;height:26px;border-radius:8px;border:1px solid var(--stroke);
+  background:var(--surface-solid);color:var(--err);cursor:pointer;display:none;place-items:center;font-size:13px}
+.upload.has .clr{display:grid}
+.file-link{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:600;text-decoration:none;
+  padding:4px 9px;border-radius:8px;background:var(--info-bg);color:var(--info);transition:all .2s ease}
+.file-link:hover{transform:translateY(-2px);background:var(--gold);color:#0B2447}
+.no-file{font-size:12.5px;color:var(--txt-3)}
+
+#lightbox{position:fixed;inset:0;z-index:9700;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(4,12,26,.88)}
+#lightbox.show{display:flex;animation:fadeIn .2s ease}
+#lightbox img{max-width:100%;max-height:88vh;border-radius:14px;box-shadow:0 30px 70px rgba(0,0,0,.6)}
+#lightbox .lbx{position:absolute;top:18px;right:20px;width:44px;height:44px;border-radius:14px;border:none;cursor:pointer;
+  background:rgba(255,255,255,.16);color:#fff;font-size:20px}
+
+/* ============================================================
+   6) ตาราง + ตัวกรอง
+   ============================================================ */
+.filter-bar{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:12px;margin-bottom:16px}
+.search-wrap{position:relative}
+.search-wrap input{padding-left:42px!important}
+.search-wrap .si{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--txt-3);font-size:16px;pointer-events:none}
+
+.table-wrap{overflow-x:auto;border-radius:var(--radius-sm);border:1px solid var(--stroke)}
+table{width:100%;border-collapse:collapse;min-width:1020px;font-size:14.2px}
+thead th{
+  position:sticky;top:0;z-index:2;text-align:left;padding:13px 14px;white-space:nowrap;
+  background:linear-gradient(135deg,var(--navy-2),var(--navy));color:#fff;font-weight:500;font-size:13.5px;
+  cursor:pointer;user-select:none;
+}
+html[data-theme="dark"] thead th{background:linear-gradient(135deg,#1B3A6B,#0C1E3C)}
+thead th:hover{color:var(--gold-2)}
+thead th .arrow{opacity:.45;font-size:11px;margin-left:4px}
+tbody td{padding:12px 14px;border-bottom:1px solid var(--stroke);vertical-align:middle}
+tbody tr{transition:background .2s ease}
+tbody tr:hover{background:rgba(242,169,0,.10)}
+tbody tr:last-child td{border-bottom:none}
+.plate{
+  display:inline-block;padding:5px 12px;border-radius:9px;font-weight:700;letter-spacing:.6px;
+  background:linear-gradient(135deg,#fff,#EDF1F8);color:#0B2447;border:1.5px solid var(--stroke-strong);
+  font-family:'Sarabun',var(--font);white-space:nowrap;
+}
+html[data-theme="dark"] .plate{background:linear-gradient(135deg,#F4F7FC,#D8E2F0);color:#0B2447}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:99px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.b-ok{background:var(--ok-bg);color:var(--ok)}
+.b-warn{background:var(--warn-bg);color:var(--warn)}
+.b-err{background:var(--err-bg);color:var(--err)}
+.b-info{background:var(--info-bg);color:var(--info)}
+.row-act{display:flex;gap:6px}
+.mini{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;cursor:pointer;border:1px solid var(--stroke);background:transparent;color:var(--txt-2);font-size:14px;transition:all .2s ease}
+.mini:hover{border-color:var(--gold);color:var(--gold);transform:translateY(-2px)}
+.mini.del:hover{border-color:var(--err);color:var(--err)}
+
+.empty{padding:52px 20px;text-align:center;color:var(--txt-3)}
+.empty .ic{font-size:52px;opacity:.4;display:block;margin-bottom:10px}
+.skeleton{height:46px;border-radius:10px;margin-bottom:8px;background:linear-gradient(90deg,var(--stroke) 25%,rgba(255,255,255,.35) 50%,var(--stroke) 75%);background-size:200% 100%;animation:sk 1.3s infinite}
+@keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+.tbl-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;flex-wrap:wrap;font-size:13.5px;color:var(--txt-2)}
+.pager{display:flex;gap:6px;align-items:center}
+.pager button{min-width:36px;height:36px;padding:0 10px;border-radius:10px;border:1px solid var(--stroke);background:transparent;color:var(--txt-2);cursor:pointer;font-family:var(--font);font-size:13.5px;transition:all .2s ease}
+.pager button:hover:not(:disabled){border-color:var(--gold);color:var(--gold)}
+.pager button.active{background:linear-gradient(135deg,var(--gold-2),var(--gold));color:#0B2447;border-color:transparent;font-weight:700}
+.pager button:disabled{opacity:.35;cursor:not-allowed}
+
+/* ============================================================
+   7) Toast + Modal
+   ============================================================ */
+#toasts{position:fixed;top:16px;right:16px;z-index:9500;display:flex;flex-direction:column;gap:10px;max-width:min(360px,92vw)}
+.toast{
+  display:flex;align-items:flex-start;gap:11px;padding:13px 15px;border-radius:14px;
+  background:var(--surface-solid);border:1px solid var(--stroke);box-shadow:var(--shadow-lg);
+  animation:tIn .35s cubic-bezier(.2,.9,.3,1) both;font-size:14px;
+}
+.toast.out{animation:tOut .3s ease forwards}
+@keyframes tIn{from{opacity:0;transform:translateX(80px) scale(.9)}to{opacity:1;transform:none}}
+@keyframes tOut{to{opacity:0;transform:translateX(80px) scale(.9)}}
+.toast .tic{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;flex-shrink:0;font-size:14px;color:#fff}
+.toast.ok .tic{background:var(--ok)} .toast.err .tic{background:var(--err)}
+.toast.warn .tic{background:var(--warn)} .toast.info .tic{background:var(--info)}
+.toast b{display:block;font-size:14.5px;font-weight:600}
+.toast p{font-size:13px;color:var(--txt-2);line-height:1.55}
+
+#modal{position:fixed;inset:0;z-index:9600;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(6,16,32,.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#modal.show{display:flex;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-box{width:min(420px,100%);padding:26px;border-radius:var(--radius);background:var(--surface-solid);border:1px solid var(--stroke);box-shadow:var(--shadow-lg);animation:popIn .3s cubic-bezier(.2,.9,.3,1)}
+@keyframes popIn{from{opacity:0;transform:scale(.9) translateY(16px)}to{opacity:1;transform:none}}
+.modal-box h3{font-size:18px;font-weight:600;margin-bottom:8px}
+.modal-box p{color:var(--txt-2);font-size:14.5px;margin-bottom:20px}
+.modal-act{display:flex;gap:10px;justify-content:flex-end}
+
+.footer-note{text-align:center;color:var(--txt-3);font-size:12.5px;margin-top:26px;line-height:1.8}
+.conn{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--txt-3)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--txt-3)}
+.dot.on{background:var(--ok);box-shadow:0 0 0 4px var(--ok-bg);animation:blink 2s infinite}
+.dot.off{background:var(--err);box-shadow:0 0 0 4px var(--err-bg)}
+@keyframes blink{50%{opacity:.45}}
+
+/* ============================================================
+   8) Responsive
+   ============================================================ */
+@media(max-width:1100px){
+  .form-grid{grid-template-columns:repeat(2,1fr)}
+  .filter-bar{grid-template-columns:1fr 1fr}
+}
+@media(max-width:760px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+  #app{padding:12px 12px 50px}
+  .card{padding:16px}
+  header.topbar{padding:12px 14px}
+  .brand .logo{width:42px;height:42px}
+  .form-actions .btn,.top-actions .btn{flex:1}
+}
+@media(max-width:480px){
+  .form-grid{grid-template-columns:1fr}
+  .field.col-2{grid-column:span 1}
+  .filter-bar{grid-template-columns:1fr}
+  .kpi-grid{grid-template-columns:1fr 1fr;gap:10px}
+  .kpi{padding:14px}
+}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+@media print{#splash,.top-actions,.form-card,.filter-bar,.row-act{display:none!important}}
+
+/* ---- เฉพาะแอปฟอร์ม ---- */
+#app{max-width:900px;padding-bottom:110px}
+
+/* หัวฟอร์ม — แนวนอน กระชับ ไม่กินพื้นที่การกรอก */
+.hero{display:flex;align-items:center;gap:14px;padding:12px 18px;margin-bottom:16px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;left:0;right:0;top:0;height:3px;
+  background:linear-gradient(90deg,var(--gold),var(--gold-2),var(--navy-3))}
+.hero .logo{width:44px;height:44px;flex-shrink:0;filter:drop-shadow(0 4px 12px rgba(242,169,0,.38))}
+.hero-txt{flex:1;min-width:0}
+.hero h1{font-size:clamp(15px,2.6vw,19px);font-weight:700;line-height:1.4}
+.hero .place{color:var(--txt-3);font-size:12.5px;margin-top:2px;line-height:1.6}
+.hero .rule{color:var(--warn);font-weight:600}
+.hero-act{display:flex;align-items:center;gap:8px;flex-shrink:0}
+
+/* dropdown ให้หน้าตาเหมือนกันทุกแพลตฟอร์ม (iOS/Android จะ render select เองถ้าไม่ตั้ง appearance) */
+.field select{appearance:none;-webkit-appearance:none;-moz-appearance:none;cursor:pointer;
+  background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237A8AA3' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center;background-size:12px;padding-right:38px}
+html[data-theme="dark"] .field select{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238DA1BF' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.field select:invalid,.field select option[value=""]{color:var(--txt-3)}
+.other-in{margin-top:8px}
+
+/* หมวดย่อยในฟอร์ม — แบ่งกลุ่มให้กรอกทีละส่วน อ่านง่ายกว่ากองรวมกัน 13 ช่อง */
+.fsec{margin-bottom:24px}
+.fsec:last-of-type{margin-bottom:6px}
+.fsec-head{display:flex;align-items:center;gap:11px;margin-bottom:14px;padding-bottom:10px;
+  border-bottom:1px solid var(--stroke)}
+.fsec-no{width:30px;height:30px;flex-shrink:0;border-radius:10px;display:grid;place-items:center;
+  font-size:13.5px;font-weight:700;color:#0B2447;background:linear-gradient(135deg,var(--gold-2),var(--gold));
+  box-shadow:0 4px 12px rgba(242,169,0,.32)}
+.fsec-head h3{font-size:15.5px;font-weight:600;line-height:1.4}
+.fsec-head h3 small{display:block;font-size:12.5px;font-weight:400;color:var(--txt-3)}
+
+.form-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:15px}
+.field{display:flex;flex-direction:column;gap:7px;grid-column:span 6}
+.c2{grid-column:span 2}   /* 3 ช่องต่อแถว */
+.c3{grid-column:span 3}   /* 2 ช่องต่อแถว */
+.c6{grid-column:span 6}   /* เต็มแถว */
+
+.field label{font-size:13.5px;font-weight:500;color:var(--txt-2);line-height:1.5}
+.field input,.field select{padding:13px 15px;font-size:15.5px}
+.upload{min-height:86px;padding:14px 16px}
+.upload .uic{width:46px;height:46px;font-size:21px}
+.upload .thumb{width:58px;height:58px}
+
+/* แถบปุ่มส่งข้อมูลแบบลอยติดขอบล่าง — บนมือถือไม่ต้องเลื่อนหาปุ่ม */
+.submit-bar{position:fixed;left:0;right:0;bottom:0;z-index:600;padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+  background:var(--surface);-webkit-backdrop-filter:blur(16px) saturate(160%);backdrop-filter:blur(16px) saturate(160%);
+  border-top:1px solid var(--stroke);box-shadow:0 -6px 24px rgba(11,36,71,.10)}
+.submit-inner{max-width:900px;margin:0 auto;display:flex;gap:11px;align-items:center}
+.submit-inner .btn{flex:1;padding:14px 20px;font-size:15.5px}
+.submit-inner .btn-ghost{flex:0 0 auto;padding:14px 18px}
+.submit-note{font-size:12px;color:var(--txt-3);text-align:center;margin-top:7px}
+
+/* หน้าจอยืนยันหลังส่งสำเร็จ */
+#done{display:none;padding:44px 24px;text-align:center}
+#done.show{display:block;animation:popIn .45s cubic-bezier(.2,.9,.3,1)}
+#done .ok-ic{width:92px;height:92px;margin:0 auto 18px;border-radius:50%;display:grid;place-items:center;font-size:46px;
+  background:linear-gradient(135deg,#2ECC8F,#128F5A);color:#fff;box-shadow:0 14px 36px rgba(18,143,90,.42);
+  animation:pop 1.5s ease infinite alternate}
+@keyframes pop{to{transform:scale(1.06)}}
+#done h2{font-size:24px;font-weight:700;margin-bottom:8px}
+#done p{color:var(--txt-2);font-size:15px;line-height:1.8}
+#done .sum{display:inline-block;margin:22px auto 8px;padding:16px 24px;border-radius:var(--radius-sm);
+  background:var(--surface-solid);border:1px solid var(--stroke);text-align:left;font-size:14.5px;line-height:2.1;max-width:100%}
+#done .sum b{color:var(--txt-3);font-weight:500;display:inline-block;min-width:104px}
+
+/* ---------- Responsive ---------- */
+@media(max-width:820px){          /* Tablet แนวตั้ง */
+  .c2{grid-column:span 3}
+  .form-grid{gap:14px}
+}
+@media(max-width:600px){          /* Mobile */
+  #app{padding:10px 12px 124px}
+  .hero{padding:11px 13px;gap:11px;flex-wrap:wrap}
+  .hero .logo{width:38px;height:38px}
+  .hero-act{width:100%;justify-content:space-between;order:3;padding-top:8px;border-top:1px solid var(--stroke)}
+  .c2,.c3{grid-column:span 6}
+  .form-grid{gap:13px}
+  .card{padding:16px 15px}
+  .fsec-head{margin-bottom:12px}
+  /* iOS จะซูมหน้าจออัตโนมัติถ้าตัวอักษรในช่องกรอกเล็กกว่า 16px */
+  .field input,.field select{font-size:16px;padding:13px 14px}
+  .steps{gap:9px}
+  .steps span{font-size:12px}
+  #done{padding:34px 16px}
+  #done .sum b{min-width:auto;display:block;font-size:12.5px}
+  #done .sum{line-height:1.7;width:100%}
+}
+@media(min-width:1100px){         /* Laptop / Desktop */
+  #app{max-width:980px}
+  .hero{padding:32px 26px}
+}
+@media(hover:none){               /* อุปกรณ์สัมผัส: ปุ่มใหญ่พอสำหรับนิ้ว */
+  .icon-btn{width:46px;height:46px}
+  .btn{padding:13px 22px}
+}
+</style>
+</head>
+<body>
+
+<!-- SPLASH / LOCK -->
+<div id="splash">
+  <div class="splash-logo" id="splashLogo"></div>
+  <div class="splash-title">SEACON <span>Shop Vehicle Pass</span></div>
+  <div class="splash-sub">แบบฟอร์มลงทะเบียนรถยนต์พนักงานร้านค้า</div>
+  <div class="splash-bar"><i></i></div>
+  <div class="lock-only">
+    <button class="btn-unlock" id="btnUnlock">แตะเพื่อเริ่มกรอกแบบฟอร์ม</button>
+    <div class="lock-note">ระบบล้างข้อมูลในแบบฟอร์มอัตโนมัติเมื่อไม่มีการใช้งาน<br>เพื่อป้องกันข้อมูลส่วนบุคคลของท่านรั่วไหล</div>
+  </div>
+</div>
+
+<div id="app">
+  <header class="hero glass">
+    <div class="logo" id="heroLogo"></div>
+    <div class="hero-txt">
+      <h1>แบบฟอร์มลงทะเบียนรถยนต์พนักงานร้านค้า</h1>
+      <div class="place">ศูนย์การค้าซีคอนบางแค · <span class="rule">ลงทะเบียนได้ 1 คน ต่อ 1 คันเท่านั้น</span></div>
+    </div>
+    <div class="hero-act">
+      <span class="conn"><span class="dot" id="connDot"></span><span id="connTxt">พร้อมใช้งาน</span></span>
+      <button class="icon-btn" id="btnTheme" title="สลับโหมดสว่าง/มืด">🌙</button>
+      <button class="icon-btn" id="btnLock" title="ล้างข้อมูลและออกจากแบบฟอร์ม">🔒</button>
+    </div>
+  </header>
+
+  <section class="card glass" id="formCard">
+    <form id="vForm" autocomplete="off" novalidate>
+
+      <!-- หมวด 1 -->
+      <div class="fsec">
+        <div class="fsec-head">
+          <div class="fsec-no">1</div>
+          <h3>ข้อมูลผู้ลงทะเบียน<small>กรอกตามบัตรพนักงานที่ศูนย์ฯ ออกให้</small></h3>
+        </div>
+        <div class="form-grid">
+          <div class="field c3">
+            <label for="f_name">ชื่อ-นามสกุล<span class="req">*</span></label>
+            <input type="text" id="f_name" placeholder="เช่น สมชาย ใจดี" required>
+            <span class="err-msg">กรุณากรอกชื่อ-นามสกุล อย่างน้อย 3 ตัวอักษร</span>
+          </div>
+          <div class="field c3">
+            <label for="f_phone">เบอร์โทร<span class="req">*</span></label>
+            <input type="tel" id="f_phone" placeholder="08X-XXX-XXXX" maxlength="12" inputmode="numeric" required>
+            <span class="err-msg">รูปแบบไม่ถูกต้อง (ต้องขึ้นต้นด้วย 0 และมี 9-10 หลัก)</span>
+          </div>
+          <div class="field c6" style="display:none">
+            <label for="f_ts">ประทับเวลา</label>
+            <input type="datetime-local" id="f_ts" required readonly>
+            <span class="err-msg">กรุณาระบุวันที่และเวลา</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- หมวด 2 -->
+      <div class="fsec">
+        <div class="fsec-head">
+          <div class="fsec-no">2</div>
+          <h3>ข้อมูลร้านค้า<small>ร้านที่ท่านปฏิบัติงานอยู่ภายในศูนย์การค้า</small></h3>
+        </div>
+        <div class="form-grid">
+          <div class="field c2">
+            <label for="f_shop">ชื่อร้านค้า (Shop)<span class="req">*</span></label>
+            <input type="text" id="f_shop" placeholder="เช่น ห้างทองเยาวราชกรุงเทพ" required>
+            <span class="err-msg">กรุณากรอกชื่อร้านค้า</span>
+          </div>
+          <div class="field c2">
+            <label for="f_room">หมายเลขห้อง<span class="req">*</span></label>
+            <input type="text" id="f_room" placeholder="เช่น B16" required>
+            <span class="err-msg">กรุณากรอกหมายเลขห้อง</span>
+          </div>
+          <div class="field c2">
+            <label for="s_floor">ชั้น<span class="req">*</span></label>
+            <select id="s_floor" required></select>
+            <input type="text" id="f_floor" class="other-in" placeholder="ระบุชั้นเอง" style="display:none">
+            <span class="err-msg">กรุณาระบุชั้น</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- หมวด 3 -->
+      <div class="fsec">
+        <div class="fsec-head">
+          <div class="fsec-no">3</div>
+          <h3>ข้อมูลรถยนต์<small>กรอกตามที่ปรากฏในสำเนาทะเบียนรถ</small></h3>
+        </div>
+        <div class="form-grid">
+          <div class="field c3">
+            <label for="f_plate">ทะเบียน<span class="req">*</span></label>
+            <input type="text" id="f_plate" placeholder="เช่น 4ขต6791" maxlength="12" required>
+            <span class="err-msg" id="plateErr">รูปแบบทะเบียนไม่ถูกต้อง เช่น 1กก 1234 / กข 4567</span>
+          </div>
+          <div class="field c3">
+            <label for="s_prov">จังหวัด (ตามทะเบียนรถยนต์)<span class="req">*</span></label>
+            <select id="s_prov" required></select>
+            <input type="text" id="f_prov" class="other-in" placeholder="ระบุจังหวัดเอง" style="display:none">
+            <span class="err-msg">กรุณาระบุจังหวัด</span>
+          </div>
+          <div class="field c2">
+            <label for="s_brand">ยี่ห้อ<span class="req">*</span></label>
+            <select id="s_brand" required></select>
+            <input type="text" id="f_brand" class="other-in" placeholder="ระบุยี่ห้อเอง" style="display:none">
+            <span class="err-msg">กรุณาเลือกยี่ห้อรถ</span>
+          </div>
+          <div class="field c2">
+            <label for="s_model">รุ่น<span class="req">*</span></label>
+            <select id="s_model" required></select>
+            <input type="text" id="f_model" class="other-in" placeholder="ระบุรุ่นเอง" style="display:none">
+            <span class="err-msg">กรุณาเลือกรุ่นรถ</span>
+          </div>
+          <div class="field c2">
+            <label for="s_color">สี<span class="req">*</span></label>
+            <select id="s_color" required></select>
+            <input type="text" id="f_color" class="other-in" placeholder="ระบุสีเอง" style="display:none">
+            <span class="err-msg">กรุณาเลือกสีรถ</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- หมวด 4 -->
+      <div class="fsec">
+        <div class="fsec-head">
+          <div class="fsec-no">4</div>
+          <h3>เอกสารแนบ<small>ถ่ายภาพให้ชัดเจน อ่านตัวอักษรได้ครบถ้วน</small></h3>
+        </div>
+        <div class="form-grid">
+          <div class="field c3">
+            <label>แนบภาพบัตรพนักงาน<span class="req">*</span></label>
+            <div class="upload" id="upCard">
+              <input type="file" id="f_card" accept="image/*" capture="environment">
+              <div class="uic">🪪</div>
+              <img class="thumb" id="thCard" alt="ตัวอย่างบัตรพนักงาน">
+              <div class="utx"><b id="txCard">แตะเพื่อถ่ายภาพ / เลือกไฟล์</b>
+                บัตรที่ทางศูนย์ฯ ออกให้เท่านั้น</div>
+              <button type="button" class="clr" id="clrCard" title="ลบไฟล์">✕</button>
+            </div>
+            <span class="err-msg">กรุณาแนบภาพบัตรพนักงาน</span>
+          </div>
+          <div class="field c3">
+            <label>แนบสำเนาทะเบียนรถยนต์<span class="req">*</span></label>
+            <div class="upload" id="upReg">
+              <input type="file" id="f_reg" accept="image/*" capture="environment">
+              <div class="uic">📄</div>
+              <img class="thumb" id="thReg" alt="ตัวอย่างสำเนาทะเบียนรถ">
+              <div class="utx"><b id="txReg">แตะเพื่อถ่ายภาพ / เลือกไฟล์</b>
+                ให้เห็นเลขทะเบียนและชื่อผู้ครอบครอง</div>
+              <button type="button" class="clr" id="clrReg" title="ลบไฟล์">✕</button>
+            </div>
+            <span class="err-msg">กรุณาแนบสำเนาทะเบียนรถยนต์</span>
+          </div>
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <!-- แถบปุ่มลอยติดขอบล่าง -->
+  <div class="submit-bar" id="submitBar">
+    <div class="submit-inner">
+      <button type="button" class="btn btn-ghost" id="btnReset">ล้าง</button>
+      <button type="button" class="btn btn-primary" id="btnSave"><span class="spin"></span><span id="saveTxt">ส่งข้อมูลลงทะเบียน</span></button>
+    </div>
+    <div class="submit-note">ลงทะเบียนได้ 1 คน ต่อ 1 คันเท่านั้น</div>
+  </div>
+
+  <section class="card glass" id="done">
+    <div class="ok-ic">✓</div>
+    <h2>ลงทะเบียนสำเร็จ</h2>
+    <p>ข้อมูลของท่านถูกบันทึกเข้าระบบเรียบร้อยแล้ว<br>เจ้าหน้าที่จะตรวจสอบเอกสารและแจ้งผลให้ทราบต่อไป</p>
+    <div class="sum" id="doneSum"></div>
+    <div class="form-actions" style="justify-content:center">
+      <button class="btn btn-primary" id="btnAgain">ลงทะเบียนคันถัดไป</button>
+    </div>
+  </section>
+
+  <div class="footer-note">
+    Seacon Shop Vehicle Pass · ศูนย์การค้าซีคอนบางแค<br>
+    ข้อมูลส่วนบุคคลได้รับความคุ้มครองตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล (PDPA)
+  </div>
+</div>
+
+<div id="toasts"></div>
+<div id="lightbox"><button class="lbx">✕</button><img alt="ภาพเอกสารแนบ"></div>
+<div id="modal">
+  <div class="modal-box">
+    <h3 id="mTitle">ยืนยันการดำเนินการ</h3>
+    <p id="mMsg">คุณต้องการดำเนินการต่อหรือไม่</p>
+    <div class="modal-act">
+      <button class="btn btn-ghost" id="mNo">ยกเลิก</button>
+      <button class="btn btn-danger" id="mYes">ยืนยัน</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+   SEACON SHOP VEHICLE PASS — แอปที่ 1: ฟอร์มลงทะเบียน (สำหรับพนักงานร้านค้า)
+   v1.0 · Single-file HTML SPA + Google Apps Script
+   หมายเหตุ: แอปนี้ "ส่งข้อมูลอย่างเดียว" ไม่ดึงรายการผู้อื่นมาแสดง
+   เพื่อไม่ให้ข้อมูลส่วนบุคคลของผู้อื่นอยู่ในเครื่องผู้กรอก (PDPA)
+   ================================================================ */
+
+/* ---------- 1) CONFIG ---------- */
+const CONFIG = {
+  GAS_URL   : 'https://script.google.com/macros/s/AKfycbx5sxeqCcuD5wnoEcv6Wt3XTB3RClHlmUP-JvCmp3WZDiVGs07bWpiXu5BmuZudlQkF/exec',
+  IDLE_MS   : 5 * 60 * 1000,   // ไม่มีการใช้งาน 5 นาที → ล้างฟอร์มและกลับหน้าแรก
+  SPLASH_MS : 2800,
+  MAX_IMG_PX  : 1400,
+  IMG_QUALITY : 0.72,
+  MAX_IMG_BYTES : 2600000,     // ขนาด dataURL ต่อรูปหลังบีบอัด (~2.6MB)
+  MAX_PAYLOAD   : 7000000,     // เพดาน payload รวมที่ยอมส่ง (~7MB)
+  POST_TIMEOUT  : 90000        // อัปโหลดรูป 2 ใบบนเน็ตช้าต้องเผื่อเวลาไว้มากพอ
+};
+
+/* ---------- 2) โลโก้ SVG ---------- */
+const LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#17356B"/><stop offset="1" stop-color="#071429"/>
+    </linearGradient>
+    <linearGradient id="gd" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFD75E"/><stop offset="0.55" stop-color="#F2A900"/><stop offset="1" stop-color="#C98A00"/>
+    </linearGradient>
+  </defs>
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="url(#bg)"/>
+  <path d="M256 44c58 0 112 22 152 60-46-24-98-36-152-36S150 80 104 104c40-38 94-60 152-60z" fill="url(#gd)" opacity=".95"/>
+  <path d="M96 300c0-92 72-160 160-160s160 68 160 160" fill="none" stroke="url(#gd)" stroke-width="17" stroke-linecap="round" opacity=".55"/>
+  <path d="M150 300l24-62c6-16 20-26 37-26h90c17 0 31 10 37 26l24 62v74a14 14 0 0 1-14 14h-30a14 14 0 0 1-14-14v-18H208v18a14 14 0 0 1-14 14h-30a14 14 0 0 1-14-14z" fill="url(#gd)"/>
+  <path d="M186 296l17-44a12 12 0 0 1 11-8h84a12 12 0 0 1 11 8l17 44z" fill="#0B2447" opacity=".85"/>
+  <circle cx="190" cy="330" r="15" fill="#0B2447"/><circle cx="322" cy="330" r="15" fill="#0B2447"/>
+  <path d="M256 404l86 26v42c0 38-36 66-86 82-50-16-86-44-86-82v-42z" fill="#0B2447" stroke="url(#gd)" stroke-width="13" stroke-linejoin="round"/>
+  <path d="M222 470l24 26 48-56" fill="none" stroke="url(#gd)" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
+
+
+/* ---------- 3) ยูทิลิตี้ ---------- */
+const $  = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+const TH_MONTH = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+function esc(v){
+  return String(v==null?'':v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+/* แปลงค่าวันที่ทุกรูปแบบ (ISO / d/m/y / พ.ศ. / Excel serial) → Date object (ค.ศ.)
+   เหตุผล: ข้อมูลใน Google Sheets เดิมมักถูกกรอกเป็น พ.ศ. หรือรูปแบบไทย ต้อง normalize ก่อนใช้งานเสมอ */
+function parseDate(v){
+  if(!v && v!==0) return null;
+  if(v instanceof Date && !isNaN(v)) return v;
+  if(typeof v === 'number' && v > 20000 && v < 80000){         // Excel/Sheets serial
+    return new Date(Date.UTC(1899,11,30) + v*86400000);
+  }
+  const s = String(v).trim();
+  if(!s) return null;
+  // ISO / "yyyy-mm-dd HH:MM:SS" (เก็บเวลาไว้ด้วย เพราะคอลัมน์แรกเป็นประทับเวลา)
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T ](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if(m){ let y=+m[1]; if(y>2400) y-=543; return new Date(y, +m[2]-1, +m[3], +(m[4]||0), +(m[5]||0), +(m[6]||0)); }
+  m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})(?:[T ,]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);   // d/m/Y HH:MM
+  if(m){ let y=+m[3]; if(y>2400) y-=543; return new Date(y, +m[2]-1, +m[1], +(m[4]||0), +(m[5]||0), +(m[6]||0)); }
+  const d = new Date(s);
+  return isNaN(d) ? null : d;
+}
+/* แสดงผลวันที่แบบไทย พ.ศ. เช่น "18 สิงหาคม 2569" */
+function fmtTH(v, short){
+  const d = parseDate(v);
+  if(!d) return '-';
+  const be = d.getFullYear() + 543;
+  return short ? `${d.getDate()}/${d.getMonth()+1}/${be}` : `${d.getDate()} ${TH_MONTH[d.getMonth()]} ${be}`;
+}
+function toISO(v){
+  const d = parseDate(v);
+  if(!d) return '';
+  const p = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+}
+function num(n){ return Number(n||0).toLocaleString('th-TH'); }
+/* แสดงประทับเวลาแบบไทย: 18/8/2569 14:05 */
+function fmtTS(v){
+  const d = parseDate(v);
+  if(!d) return '-';
+  const p = n => String(n).padStart(2,'0');
+  const t = (d.getHours() || d.getMinutes()) ? ` ${p(d.getHours())}:${p(d.getMinutes())}` : '';
+  return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()+543}${t}`;
+}
+function fmtPhone(p){
+  const d = String(p||'').replace(/\D/g,'');
+  if(d.length===10) return `${d.slice(0,3)}-${d.slice(3,6)}-${d.slice(6)}`;
+  if(d.length===9)  return `${d.slice(0,2)}-${d.slice(2,5)}-${d.slice(5)}`;
+  return p || '-';
+}
+
+
+/* แปลงเลขไทยเป็นเลขอารบิก และตัดอักขระที่มองไม่เห็นออก
+   ผู้ใช้บางคนพิมพ์ด้วยแป้นไทยจึงได้ "๑กก ๑๒๓๔" ซึ่งจะไม่ผ่าน regex ตรวจทะเบียน */
+function thaiDigits(s){
+  return String(s||'').replace(/[๐-๙]/g, d => '๐๑๒๓๔๕๖๗๘๙'.indexOf(d))
+                      .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, ' ');
+}
+function normPlate(v){
+  return thaiDigits(v).replace(/[-–—.]/g,' ').replace(/\s+/g,' ').trim();
+}
+/* +66812345678 / 0066... / 66812345678 → 0812345678
+   เกิดบ่อยเมื่อผู้ใช้วางเบอร์จากรายชื่อผู้ติดต่อหรือ LINE */
+function normPhone(v){
+  let d = thaiDigits(v).replace(/\D/g,'');
+  if(d.indexOf('0066') === 0) d = '0' + d.slice(4);
+  else if(d.indexOf('66') === 0 && d.length >= 11) d = '0' + d.slice(2);
+  return d.slice(0,10);
+}
+/* ค่าที่ขึ้นต้นด้วย = + - @ จะถูก Excel/Sheets ตีความเป็นสูตร (CSV injection)
+   จึงต้องเติม ' นำหน้าก่อนส่งออกไฟล์เสมอ */
+function csvSafe(v){
+  const s = String(v == null ? '' : v);
+  return /^[=+\-@\t\r]/.test(s) ? "'" + s : s;
+}
+/* ดึง Drive file id จากลิงก์ทุกรูปแบบ (open?id= / file/d/ / uc?id=)
+   regex แบบกวาดหาคำยาว ๆ เดิมมีโอกาสจับส่วนอื่นของ URL ผิด */
+function driveId(url){
+  const s = String(url || '');
+  let m = s.match(/[?&]id=([-\w]{20,})/) || s.match(/\/d\/([-\w]{20,})/) || s.match(/\/file\/d\/([-\w]{20,})/);
+  return m ? m[1] : '';
+}
+function driveThumb(url){
+  const id = driveId(url);
+  return id ? 'https://drive.google.com/thumbnail?id=' + id + '&sz=w400' : url;
+}
+
+/* ---------- 4) Toast + Modal ---------- */
+const TICON = { ok:'✓', err:'!', warn:'!', info:'i' };
+function toast(type, title, msg, ms){
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<div class="tic">${TICON[type]||'i'}</div><div><b>${esc(title)}</b>${msg?`<p>${esc(msg)}</p>`:''}</div>`;
+  $('#toasts').appendChild(el);
+  const t = setTimeout(close, ms || (type==='err'?6000:3600));
+  el.addEventListener('click', close);
+  function close(){ clearTimeout(t); el.classList.add('out'); setTimeout(()=>el.remove(), 300); }
+  return el;
+}
+
+/* ---------- 5) Modal ยืนยัน (ใช้แทน confirm/alert) ---------- */
+let modalCb = null;
+function confirmBox(title, msg, cb){
+  $('#mTitle').textContent = title;
+  $('#mMsg').textContent = msg;
+  modalCb = cb;
+  $('#modal').classList.add('show');
+}
+$('#mNo').onclick = () => { $('#modal').classList.remove('show'); modalCb = null; };
+$('#mYes').onclick = () => { $('#modal').classList.remove('show'); if(modalCb){ const c=modalCb; modalCb=null; c(); } };
+$('#modal').addEventListener('click', e => { if(e.target.id==='modal') $('#mNo').click(); });
+
+
+/* ---------- 6) ธีม Light / Dark ---------- */
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme', t);
+  $('#btnTheme').textContent = t==='dark' ? '☀️' : '🌙';
+  $('#metaThemeColor').setAttribute('content', t==='dark' ? '#060F1E' : '#0B2447');
+  try{ localStorage.setItem('svp_theme', t); }catch(e){}
+}
+function initTheme(){
+  let t = null;
+  try{ t = localStorage.getItem('svp_theme'); }catch(e){}
+  if(!t) t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  applyTheme(t);
+}
+$('#btnTheme').onclick = () => applyTheme(document.documentElement.getAttribute('data-theme')==='dark' ? 'light' : 'dark');
+
+
+/* ---------- 7) Splash + Idle Lock ---------- */
+let idleTimer = null, locked = false;
+function lockScreen(){
+  if(locked || idleSuspended) return;   // ห้ามล็อกจอระหว่างกำลังบันทึกข้อมูล
+  locked = true;
+  $('#app').classList.add('blurred');                 // เบลอทันทีเพื่อกันคนอ่านข้อมูลค้างจอ
+  const sp = $('#splash');
+  sp.classList.add('locked'); sp.classList.remove('hide');
+  if(typeof onLock === 'function') onLock();          // ให้แต่ละแอปเคลียร์ข้อมูลที่ค้างบนหน้าจอเอง
+}
+function unlockScreen(){
+  locked = false;
+  $('#splash').classList.add('hide');
+  $('#app').classList.remove('blurred');
+  resetIdle();
+  if(typeof onUnlock === 'function') onUnlock();      // โหลด/รีเซ็ตข้อมูลใหม่ทุกครั้งที่กลับเข้าใช้งาน
+}
+let idleSuspended = false;   // true ระหว่างกำลังส่งข้อมูล/อัปโหลด
+function suspendIdle(on){
+  idleSuspended = !!on;
+  if(on) clearTimeout(idleTimer); else resetIdle();
+}
+function resetIdle(){
+  if(locked || idleSuspended) return;
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(lockScreen, CONFIG.IDLE_MS);
+}
+['mousemove','mousedown','keydown','touchstart','touchmove','scroll','wheel','click','input'].forEach(ev=>{
+  window.addEventListener(ev, resetIdle, {passive:true});
+});
+document.addEventListener('visibilitychange', () => { if(document.hidden && !idleSuspended) lockScreen(); });
+$('#btnUnlock').onclick = unlockScreen;
+$('#btnLock').onclick = lockScreen;
+
+
+/* ---------- 8) PWA ---------- */
+function svgDataUrl(){ return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(LOGO_SVG); }
+function svgToPng(size){
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = c.height = size;
+      const ctx = c.getContext('2d');
+      ctx.drawImage(img, 0, 0, size, size);
+      try{ resolve(c.toDataURL('image/png')); }catch(e){ resolve(null); }
+    };
+    img.onerror = () => resolve(null);
+    img.src = svgDataUrl();
+  });
+}
+async function initPWA(){
+  $('#faviconSvg').href = svgDataUrl();
+  $('#maskIcon').href   = svgDataUrl();
+  const [i180, i192, i512] = await Promise.all([svgToPng(180), svgToPng(192), svgToPng(512)]);
+  if(i180) $('#appleIcon').href = i180;
+  const icons = [];
+  if(i192) icons.push({src:i192, sizes:'192x192', type:'image/png', purpose:'any maskable'});
+  if(i512) icons.push({src:i512, sizes:'512x512', type:'image/png', purpose:'any maskable'});
+  const manifest = {
+    name:'Seacon Shop Vehicle Pass',
+    short_name:'Vehicle Pass',
+    description:'ระบบบันทึกข้อมูลรถยนต์พนักงานร้านค้าภายในศูนย์การค้า',
+    start_url:'.', scope:'.', display:'standalone', orientation:'portrait-primary',
+    background_color:'#0B2447', theme_color:'#0B2447', lang:'th', dir:'ltr',
+    categories:['business','productivity'], icons
+  };
+  const url = URL.createObjectURL(new Blob([JSON.stringify(manifest)], {type:'application/manifest+json'}));
+  $('#manifestLink').href = url;
+}
+
+
+/* ---------- 9) API ----------
+   อ่านข้อมูล = JSONP (เบา เร็ว ข้ามโดเมนได้)
+   เขียนข้อมูล = POST แบบ text/plain (simple request ไม่ต้อง preflight)
+   เพราะ payload มีรูปภาพ base64 ซึ่งยาวเกินความยาว URL ที่ GET รองรับ */
+let jsonpSeq = 0;
+function apiGet(params, timeoutMs){
+  return new Promise((resolve, reject) => {
+    if(!checkUrl(reject)) return;
+    if(navigator.onLine === false){ reject(new Error('อุปกรณ์ไม่ได้เชื่อมต่ออินเทอร์เน็ต กรุณาตรวจสอบสัญญาณ')); return; }
+    const cbName = '__svp_cb_' + (++jsonpSeq) + '_' + Date.now();
+    const s = document.createElement('script');
+    const to = setTimeout(() => { cleanup(); reject(new Error('หมดเวลาเชื่อมต่อเซิร์ฟเวอร์ (Timeout)')); }, timeoutMs || 25000);
+    function cleanup(){ clearTimeout(to); delete window[cbName]; if(s.parentNode) s.parentNode.removeChild(s); }
+    window[cbName] = res => { cleanup(); (res && res.ok) ? resolve(res) : reject(new Error((res && res.error) || 'เกิดข้อผิดพลาดที่เซิร์ฟเวอร์')); };
+    const qs = Object.keys(params).map(k => encodeURIComponent(k)+'='+encodeURIComponent(params[k])).join('&');
+    s.src = CONFIG.GAS_URL + '?' + qs + '&callback=' + cbName;
+    s.onerror = () => { cleanup(); reject(new Error('เชื่อมต่อ Google Apps Script ไม่สำเร็จ กรุณาตรวจสอบ URL และสิทธิ์การเข้าถึง')); };
+    document.body.appendChild(s);
+  });
+}
+async function apiPost(body, timeoutMs){
+  if(!CONFIG.GAS_URL || CONFIG.GAS_URL.indexOf('XXXX') > -1) throw new Error('ยังไม่ได้ตั้งค่า GAS_URL ในไฟล์ (CONFIG.GAS_URL)');
+  if(navigator.onLine === false) throw new Error('อุปกรณ์ไม่ได้เชื่อมต่ออินเทอร์เน็ต กรุณาตรวจสอบสัญญาณแล้วลองใหม่');
+
+  const payloadText = JSON.stringify(body);
+  // Apps Script รับ payload ได้จำกัด รูปจากกล้องความละเอียดสูง 2 ใบอาจทะลุเพดานได้
+  if(payloadText.length > CONFIG.MAX_PAYLOAD){
+    throw new Error('ไฟล์แนบมีขนาดใหญ่เกินไป กรุณาถ่ายภาพใหม่หรือเลือกรูปที่เล็กลง');
+  }
+
+  // ต้องมี timeout เสมอ ไม่เช่นนั้นเมื่อสัญญาณหลุดกลางทาง คำขอจะค้างไม่มีกำหนด
+  const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const to = setTimeout(() => { if(ctrl) ctrl.abort(); }, timeoutMs || CONFIG.POST_TIMEOUT);
+  let res;
+  try{
+    res = await fetch(CONFIG.GAS_URL, {
+      method:'POST', redirect:'follow',
+      headers:{ 'Content-Type':'text/plain;charset=utf-8' },   // text/plain = simple request จึงไม่โดน CORS preflight บล็อก
+      body: payloadText,
+      signal: ctrl ? ctrl.signal : undefined
+    });
+  }catch(err){
+    clearTimeout(to);
+    if(err && err.name === 'AbortError'){
+      throw new Error('เชื่อมต่อเซิร์ฟเวอร์นานเกินกำหนด — ข้อมูลอาจถูกบันทึกแล้ว กรุณาตรวจสอบก่อนส่งซ้ำ');
+    }
+    throw new Error('ส่งข้อมูลไม่สำเร็จ: ' + (err && err.message ? err.message : 'เชื่อมต่อเครือข่ายไม่ได้'));
+  }
+  clearTimeout(to);
+
+  if(!res.ok) throw new Error('เซิร์ฟเวอร์ตอบกลับผิดพลาด (HTTP ' + res.status + ') กรุณาลองใหม่อีกครั้ง');
+  const txt = await res.text();
+  let out;
+  try{ out = JSON.parse(txt); }
+  catch(e){
+    // มักเกิดเมื่อ Web App ตั้งสิทธิ์ไม่ถูก แล้ว Google ส่งหน้า login กลับมาเป็น HTML
+    throw new Error('เซิร์ฟเวอร์ตอบกลับผิดรูปแบบ กรุณาตรวจสอบว่า Deploy เป็น Web app และตั้งค่า Who has access เป็น Anyone');
+  }
+  if(!out || out.ok !== true) throw new Error((out && out.error) || 'เกิดข้อผิดพลาดที่เซิร์ฟเวอร์');
+  return out;
+}
+function checkUrl(reject){
+  if(!CONFIG.GAS_URL || CONFIG.GAS_URL.indexOf('XXXX') > -1){
+    reject(new Error('ยังไม่ได้ตั้งค่า GAS_URL ในไฟล์ (CONFIG.GAS_URL)')); return false;
+  }
+  return true;
+}
+function setConn(state, txt){
+  const d = $('#connDot');
+  d.className = 'dot' + (state==='on' ? ' on' : state==='off' ? ' off' : '');
+  $('#connTxt').textContent = txt;
+}
+
+
+/* ---------- 9.1) ไฟล์แนบ: บีบอัดรูปฝั่ง client ---------- */
+/* บีบอัดก่อนส่งเสมอ เพราะรูปจากกล้องมือถือมักใหญ่ 3-6 MB ซึ่งเกิน payload ที่ Apps Script รับไหว
+   แต่ยังคงความละเอียด 1400px เพื่อให้อ่านเลขบัตร/ทะเบียนได้ชัดตามข้อกำหนด */
+function compressImage(file, maxPx, quality){
+  return new Promise((resolve, reject) => {
+    if(!/^image\//.test(file.type)){ reject(new Error('รองรับเฉพาะไฟล์รูปภาพเท่านั้น')); return; }
+    const fr = new FileReader();
+    fr.onerror = () => reject(new Error('อ่านไฟล์ไม่สำเร็จ'));
+    fr.onload = () => {
+      const img = new Image();
+      // iPhone ที่ตั้งค่ากล้องเป็น HEIC จะเปิดไม่ได้บนเบราว์เซอร์บางตัว จึงต้องบอกทางแก้ให้ผู้ใช้ด้วย
+      img.onerror = () => reject(new Error('เปิดไฟล์รูปไม่ได้ (หากใช้ iPhone ให้ตั้งค่ากล้อง > รูปแบบ > ประสิทธิภาพสูงสุด เป็น "ความเข้ากันได้สูงสุด")'));
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        const scale = Math.min(1, maxPx / Math.max(w, h));
+        w = Math.round(w * scale); h = Math.round(h * scale);
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);   // กันพื้นหลังดำเมื่อต้นฉบับเป็น PNG โปร่งใส
+        ctx.drawImage(img, 0, 0, w, h);
+        try{
+          let out = c.toDataURL('image/jpeg', quality);
+          // ถ้ายังใหญ่เกินเพดาน payload ให้ลดคุณภาพลงทีละขั้นแทนที่จะปล่อยให้ส่งแล้วพัง
+          let q = quality;
+          while(out.length > CONFIG.MAX_IMG_BYTES && q > 0.35){
+            q -= 0.12;
+            out = c.toDataURL('image/jpeg', q);
+          }
+          resolve(out);
+        }catch(err){
+          reject(new Error('ไฟล์รูปมีขนาดใหญ่เกินกว่าที่อุปกรณ์จะประมวลผลได้ กรุณาถ่ายภาพใหม่ด้วยความละเอียดที่ต่ำลง'));
+        }
+      };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+function bindUpload(key, inputId, boxId, thumbId, txtId, clearId, label){
+  const input = $('#'+inputId), box = $('#'+boxId), th = $('#'+thumbId), tx = $('#'+txtId);
+  input.addEventListener('change', async () => {
+    const f = input.files && input.files[0];
+    if(!f) return;
+    if(f.size > 15 * 1024 * 1024){ toast('err','ไฟล์ใหญ่เกินไป','กรุณาเลือกรูปที่มีขนาดไม่เกิน 15 MB'); input.value=''; return; }
+    tx.textContent = 'กำลังประมวลผลรูปภาพ…';
+    try{
+      const data = await compressImage(f, CONFIG.MAX_IMG_PX, CONFIG.IMG_QUALITY);
+      FILES[key] = { data, name: f.name };
+      th.src = data; box.classList.add('has');
+      tx.textContent = 'แนบไฟล์แล้ว · ' + (f.name.length > 24 ? f.name.slice(0,24)+'…' : f.name);
+      box.closest('.field').classList.remove('invalid');
+    }catch(err){
+      FILES[key] = null; box.classList.remove('has');
+      tx.textContent = 'แตะเพื่อถ่ายภาพ / เลือกไฟล์';
+      toast('err','แนบไฟล์ไม่สำเร็จ', err.message);
+    }
+  });
+  $('#'+clearId).addEventListener('click', e => {
+    e.stopPropagation();
+    FILES[key] = null; input.value = ''; box.classList.remove('has'); th.removeAttribute('src');
+    tx.textContent = 'แตะเพื่อถ่ายภาพ / เลือกไฟล์';
+    box.dataset.existing = '';
+  });
+  th.addEventListener('click', e => {
+    e.stopPropagation();
+    if(th.src){ $('#lightbox img').src = th.src; $('#lightbox').classList.add('show'); }
+  });
+}
+$('#lightbox').addEventListener('click', () => $('#lightbox').classList.remove('show'));
+
+
+
+/* ---------- 10) State ---------- */
+const FILES = { card:null, reg:null };   // รูปที่ผู้ใช้เพิ่งเลือก (ยังไม่ส่งขึ้น Drive)
+
+/* ---------- 11) Validation ---------- */
+const RE_PLATE = /^(?:\d{0,2}[ก-ฮ]{1,3}\s?\d{1,4}|[ก-ฮ]{1,3}\s?\d{1,4}|\d{1,4}\s?[ก-ฮ]{1,3})$/;
+const RE_PHONE = /^0\d{8,9}$/;
+
+function setInvalid(id, on, msg){
+  const f = $('#'+id).closest('.field');
+  f.classList.toggle('invalid', !!on);
+  if(msg){ const e = f.querySelector('.err-msg'); if(e) e.textContent = msg; }
+}
+function markField(id, on){
+  const el = document.getElementById(id);
+  if(!el) return;
+  const f = el.closest('.field');
+  if(f) f.classList.toggle('invalid', !!on);
+}
+function validate(){
+  let ok = true;
+  const v = id => ($('#'+id).value || '').trim();
+
+  if(!v('f_ts')){ setInvalid('f_ts', true); ok = false; } else setInvalid('f_ts', false);
+  if(v('f_name').length < 3){ setInvalid('f_name', true); ok = false; } else setInvalid('f_name', false);
+
+  const phone = normPhone(v('f_phone'));
+  if(!RE_PHONE.test(phone)){ setInvalid('f_phone', true); ok = false; } else setInvalid('f_phone', false);
+
+  ['f_shop','f_room'].forEach(id => {
+    if(!v(id)){ setInvalid(id, true); ok = false; } else setInvalid(id, false);
+  });
+
+  // ช่อง dropdown: ตรวจค่าที่อ่านได้จริง (รวมกรณีเลือก "อื่น ๆ" แล้วยังไม่พิมพ์)
+  ['floor','prov','brand','model','color'].forEach(k => {
+    const val = selVal(k);
+    markField('s_'+k, !val);
+    if(!val) ok = false;
+  });
+
+  const plate = normPlate(v('f_plate'));
+  if(!RE_PLATE.test(plate)){
+    setInvalid('f_plate', true, 'รูปแบบทะเบียนไม่ถูกต้อง เช่น 1กก 1234 / กข 4567'); ok = false;
+  }else setInvalid('f_plate', false);
+
+  [['card','upCard'],['reg','upReg']].forEach(([k, boxId]) => {
+    const has = !!FILES[k];
+    $('#'+boxId).closest('.field').classList.toggle('invalid', !has);
+    if(!has) ok = false;
+  });
+
+  if(!ok){
+    toast('warn','ข้อมูลไม่ครบถ้วน','กรุณาตรวจสอบช่องที่มีกรอบสีแดงแล้วส่งอีกครั้ง');
+    const bad = document.querySelector('.field.invalid');
+    if(bad) bad.scrollIntoView({ behavior:'smooth', block:'center' });   // พาไปยังช่องแรกที่ผิด
+  }
+  return ok;
+}
+$('#f_phone').addEventListener('input', e => {
+  const d = normPhone(e.target.value);
+  e.target.value = d.length > 6 ? `${d.slice(0,3)}-${d.slice(3,6)}-${d.slice(6)}`
+                 : d.length > 3 ? `${d.slice(0,3)}-${d.slice(3)}` : d;
+});
+$('#f_plate').addEventListener('blur', e => { e.target.value = normPlate(e.target.value); });
+
+/* ---------- 12) ฟอร์ม ---------- */
+function nowLocalISO(){
+  const d = new Date(), p = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function clearForm(){
+  $('#vForm').reset();
+  ['floor','prov','brand','model','color'].forEach(k => setSelVal(k, ''));
+  $('#f_ts').value = nowLocalISO();
+  FILES.card = null; FILES.reg = null;
+  [['upCard','thCard','txCard'],['upReg','thReg','txReg']].forEach(([b,t,x]) => {
+    $('#'+b).classList.remove('has');
+    $('#'+t).removeAttribute('src');
+    $('#'+x).textContent = 'แตะเพื่อถ่ายภาพ / เลือกไฟล์';
+  });
+  $$('.field').forEach(f => f.classList.remove('invalid'));
+}
+function showForm(){
+  $('#done').classList.remove('show');
+  $('#formCard').style.display = '';
+  $('#submitBar').style.display = '';
+  clearForm();
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+$('#btnReset').onclick = () => { clearForm(); toast('info','ล้างฟอร์มแล้ว',''); };
+$('#btnAgain').onclick = showForm;
+
+/* ล้างข้อมูลทันทีเมื่อระบบล็อกหน้าจอ / กลับมาใช้งานใหม่
+   ฟอร์มนี้ใช้ร่วมกันหลายคน จึงต้องไม่เหลือข้อมูลของคนก่อนหน้าค้างไว้ */
+function onLock(){
+  clearForm();
+  $('#done').classList.remove('show');
+  $('#formCard').style.display = '';
+  $('#submitBar').style.display = '';
+}
+function onUnlock(){ $('#f_ts').value = nowLocalISO(); }
+
+let submitting = false;      // กันการกดส่งซ้ำจนเกิดข้อมูลซ้ำในชีต
+async function submitForm(){
+  if(submitting) return;
+  if(!validate()) return;
+  submitting = true;
+  suspendIdle(true);           // ห้ามล็อกจอระหว่างอัปโหลด มิฉะนั้นฟอร์มจะถูกล้างกลางคัน
+  const btn = $('#btnSave');
+  btn.classList.add('loading'); btn.disabled = true;
+  $('#saveTxt').textContent = 'กำลังส่งข้อมูล…';
+  setConn('', 'กำลังอัปโหลด…');
+
+  const payload = {
+    ts      : $('#f_ts').value.replace('T',' ') + ':00',
+    name    : $('#f_name').value.trim(),
+    phone   : normPhone($('#f_phone').value),
+    shop    : $('#f_shop').value.trim(),
+    room    : $('#f_room').value.trim(),
+    floor   : selVal('floor'),
+    plate   : normPlate($('#f_plate').value),
+    province: selVal('prov'),
+    brand   : selVal('brand'),
+    model   : selVal('model'),
+    color   : selVal('color'),
+    cardImg : '', regImg : ''
+  };
+  const files = { card: FILES.card.data, reg: FILES.reg.data };
+
+  try{
+    // ตรวจทะเบียนซ้ำที่ฝั่งเซิร์ฟเวอร์ เพราะแอปนี้ไม่ดึงรายการทั้งหมดมาไว้ในเครื่อง (PDPA)
+    // ถ้าการตรวจล้มเหลว (เน็ตสะดุด) ไม่บล็อกการส่ง เพราะฝั่งเซิร์ฟเวอร์ตรวจซ้ำอีกชั้นตอนบันทึกจริงอยู่แล้ว
+    let chk = null;
+    try{ chk = await apiGet({ action:'checkPlate', plate: payload.plate }, 15000); }
+    catch(e){ console.warn('ตรวจทะเบียนซ้ำไม่สำเร็จ ข้ามไปให้เซิร์ฟเวอร์ตัดสิน:', e.message); }
+    if(chk && chk.exists){
+      setInvalid('f_plate', true, 'ทะเบียนนี้ลงทะเบียนไว้แล้ว กรุณาติดต่อเจ้าหน้าที่หากต้องการแก้ไขข้อมูล');
+      toast('warn','ทะเบียนซ้ำ','รถทะเบียนนี้มีอยู่ในระบบแล้ว');
+      $('#f_plate').scrollIntoView({ behavior:'smooth', block:'center' });
+      return;
+    }
+
+    await apiPost({ action:'add', payload, files });
+    $('#doneSum').innerHTML =
+      `<div><b>ทะเบียน</b> ${esc(payload.plate)} ${esc(payload.province)}</div>` +
+      `<div><b>ชื่อ-นามสกุล</b> ${esc(payload.name)}</div>` +
+      `<div><b>ร้านค้า</b> ${esc(payload.shop)} · ${esc(payload.room)} ${esc(payload.floor)}</div>` +
+      `<div><b>รถ</b> ${esc(payload.brand)} ${esc(payload.model)} สี${esc(payload.color)}</div>`;
+    $('#formCard').style.display = 'none';
+    $('#submitBar').style.display = 'none';
+    $('#done').classList.add('show');
+    setConn('on', 'ส่งข้อมูลสำเร็จ');
+    toast('ok','ลงทะเบียนสำเร็จ','ระบบบันทึกข้อมูลของท่านเรียบร้อยแล้ว');
+    window.scrollTo({ top:0, behavior:'smooth' });
+  }catch(err){
+    setConn('off', 'ส่งข้อมูลไม่สำเร็จ');
+    toast('err','ส่งข้อมูลไม่สำเร็จ', err.message + ' — ข้อมูลในฟอร์มยังอยู่ครบ กรุณากดส่งอีกครั้ง');
+  }finally{
+    submitting = false;
+    suspendIdle(false);
+    btn.classList.remove('loading'); btn.disabled = false;
+    $('#saveTxt').textContent = 'ส่งข้อมูลลงทะเบียน';
+    if($('#connTxt').textContent === 'กำลังอัปโหลด…') setConn('on', 'พร้อมใช้งาน');
+  }
+}
+$('#btnSave').onclick = submitForm;
+$('#vForm').addEventListener('submit', e => { e.preventDefault(); submitForm(); });
+
+/* ---------- รายชื่อจังหวัด ---------- */
+const PROVINCES = ['กรุงเทพมหานคร','กระบี่','กาญจนบุรี','กาฬสินธุ์','กำแพงเพชร','ขอนแก่น','จันทบุรี','ฉะเชิงเทรา','ชลบุรี','ชัยนาท','ชัยภูมิ','ชุมพร','เชียงราย','เชียงใหม่','ตรัง','ตราด','ตาก','นครนายก','นครปฐม','นครพนม','นครราชสีมา','นครศรีธรรมราช','นครสวรรค์','นนทบุรี','นราธิวาส','น่าน','บึงกาฬ','บุรีรัมย์','ปทุมธานี','ประจวบคีรีขันธ์','ปราจีนบุรี','ปัตตานี','พระนครศรีอยุธยา','พะเยา','พังงา','พัทลุง','พิจิตร','พิษณุโลก','เพชรบุรี','เพชรบูรณ์','แพร่','ภูเก็ต','มหาสารคาม','มุกดาหาร','แม่ฮ่องสอน','ยโสธร','ยะลา','ร้อยเอ็ด','ระนอง','ระยอง','ราชบุรี','ลพบุรี','ลำปาง','ลำพูน','เลย','ศรีสะเกษ','สกลนคร','สงขลา','สตูล','สมุทรปราการ','สมุทรสงคราม','สมุทรสาคร','สระแก้ว','สระบุรี','สิงห์บุรี','สุโขทัย','สุพรรณบุรี','สุราษฎร์ธานี','สุรินทร์','หนองคาย','หนองบัวลำภู','อ่างทอง','อำนาจเจริญ','อุดรธานี','อุตรดิตถ์','อุทัยธานี','อุบลราชธานี'];
+
+
+
+/* ---------- ฐานข้อมูลยี่ห้อ / รุ่น / สี ----------
+   value ของยี่ห้อเก็บเป็นภาษาไทยให้ตรงกับข้อมูลเดิมในชีต ส่วน label แสดงชื่ออังกฤษกำกับ
+   รายการรุ่นเป็นตัวช่วยเลือกเท่านั้น ผู้ใช้พิมพ์รุ่นอื่นเองได้ */
+const VEHICLE_DB = {
+  'โตโยต้า': { en:'Toyota', models:['Yaris','Yaris Ativ','Yaris Cross','Vios','Altis','Corolla Cross','Camry','C-HR','Fortuner','Hilux Revo','Hilux Champ','Innova','Innova Zenix','Avanza','Veloz','Sienta','Alphard','Vellfire','Majesty','Commuter','Hiace','Prius','bZ4X','Raize','Rush','Wish','Vigo','Sport Rider']},
+  'ฮอนด้า': { en:'Honda', models:['City','City Hatchback','City e:HEV','Civic','Civic Type R','Accord','Jazz','Brio','Brio Amaze','HR-V','CR-V','BR-V','WR-V','e:N1','Odyssey','Freed','Mobilio','Stepwgn','ZR-V']},
+  'อีซูซุ': { en:'Isuzu', models:['D-Max','D-Max Hi-Lander','D-Max V-Cross','D-Max Spark','MU-X','MU-7','Adventure Master','Elf','NPR','FRR','Spacecab','Cab4']},
+  'มาสด้า': { en:'Mazda', models:['Mazda2','Mazda3','Mazda6','CX-3','CX-30','CX-5','CX-8','CX-30 EV','BT-50','MX-5','CX-60']},
+  'นิสสัน': { en:'Nissan', models:['Almera','March','Note','Sylphy','Teana','Kicks','Kicks e-Power','X-Trail','Terra','Navara','Navara PRO-4X','Juke','Leaf','Urvan','NV350']},
+  'มิตซูบิชิ': { en:'Mitsubishi', models:['Mirage','Attrage','Lancer','Triton','Triton Athlete','Pajero Sport','Xpander','Xpander Cross','Xforce','Outlander PHEV','Space Wagon','L300']},
+  'ฟอร์ด': { en:'Ford', models:['Ranger','Ranger Raptor','Ranger Wildtrak','Everest','Ranger Stormtrak','Fiesta','Focus','EcoSport','Territory','Mustang','Transit']},
+  'MG': { en:'MG', models:['MG3','MG4 Electric','MG5','MG ZS','MG ZS EV','MG HS','MG VS HEV','MG GT','MG EP','MG Extender','MG Cyberster','MG Maxus 9','MG ES','MG RX5','MG6']},
+  'BYD': { en:'BYD', models:['Atto 3','Dolphin','Seal','Seal U DM-i','Sealion 6','Sealion 7','M6','Han','Tang','Song Plus','Yuan Plus']},
+  'ซูซูกิ': { en:'Suzuki', models:['Swift','Ciaz','Celerio','Ertiga','XL7','Jimny','Carry','Vitara','S-Presso','APV']},
+  'ฮุนได': { en:'Hyundai', models:['H-1','Staria','Creta','Tucson','Santa Fe','Ioniq 5','Ioniq 6','Kona','Accent','Elantra','Stargazer']},
+  'เกีย': { en:'Kia', models:['Carnival','Sorento','Seltos','Sportage','Cerato','Picanto','Soul','EV6','EV9','Grand Carnival']},
+  'เบนซ์': { en:'Mercedes-Benz', models:['A-Class','C-Class','E-Class','S-Class','CLA','CLS','GLA','GLB','GLC','GLE','GLS','G-Class','EQA','EQB','EQE','EQS','V-Class','Vito','Sprinter']},
+  'BMW': { en:'BMW', models:['Series 1','Series 2','Series 3','Series 4','Series 5','Series 7','X1','X3','X4','X5','X6','X7','Z4','i3','i4','iX','iX3','M3','M4']},
+  'เชฟโรเลต': { en:'Chevrolet', models:['Colorado','Trailblazer','Captiva','Cruze','Sonic','Aveo','Spark','Zafira']},
+  'ซูบารุ': { en:'Subaru', models:['Forester','XV','Outback','Impreza','Legacy','BRZ','WRX','Crosstrek','Levorg']},
+  'วอลโว่': { en:'Volvo', models:['XC40','XC60','XC90','S60','S90','V60','C40 Recharge','EX30','EX90']},
+  'เลกซัส': { en:'Lexus', models:['ES','IS','LS','NX','RX','UX','LM','LX','RZ','GS','CT']},
+  'เนต้า': { en:'Neta', models:['Neta V','Neta V-II','Neta X','Neta S','Neta GT','Neta Aya']},
+  'ออร่า': { en:'ORA', models:['Good Cat','Good Cat GT','Good Cat 03','Ballet Cat','Lightning Cat']},
+  'ฮาวาล': { en:'Haval', models:['Jolion','H6','H6 PHEV','H6 GT','Dargo','Xiaolong Max']},
+  'GWM': { en:'GWM', models:['Tank 300','Tank 500','Poer','Wingle 7','Cannon']},
+  'ไอออน': { en:'AION', models:['AION Y Plus','AION ES','AION V','AION Hyptec HT','AION UT']},
+  'ฉางอาน': { en:'Changan', models:['Deepal S07','Deepal L07','Lumin','CS55 Plus','CS75 Plus','Hunter','Nevo Q05','Nevo A05']},
+  'เจ๊ทัวร์': { en:'Jetour', models:['Dashing','X70 Plus','T2','X90 Plus']},
+  'โอโมดา': { en:'OMODA', models:['OMODA C5','OMODA 5 EV','OMODA C7','OMODA E5']},
+  'เจคู': { en:'JAECOO', models:['JAECOO 6','JAECOO 7','JAECOO 8']},
+  'เชอรี่': { en:'Chery', models:['Tiggo 7 Pro','Tiggo 8 Pro','Arrizo','QQ']},
+  'เทสลา': { en:'Tesla', models:['Model 3','Model Y','Model S','Model X','Cybertruck']},
+  'เปอโยต์': { en:'Peugeot', models:['2008','3008','5008','208','308','Expert','Partner','Boxer']},
+  'โฟล์คสวาเกน': { en:'Volkswagen', models:['Golf','Polo','Passat','Tiguan','Caravelle','Transporter','Caddy','ID.4']},
+  'ออดี้': { en:'Audi', models:['A3','A4','A5','A6','A7','A8','Q2','Q3','Q5','Q7','Q8','e-tron','TT','RS Q8']},
+  'มินิ': { en:'MINI', models:['Cooper','Cooper S','Countryman','Clubman','Paceman','John Cooper Works','Electric']},
+  'ปอร์เช่': { en:'Porsche', models:['911','Cayenne','Macan','Panamera','Taycan','Boxster','Cayman']},
+  'แลนด์โรเวอร์': { en:'Land Rover', models:['Defender','Discovery','Discovery Sport','Range Rover','Range Rover Sport','Range Rover Evoque','Velar']},
+  'จากัวร์': { en:'Jaguar', models:['XE','XF','XJ','F-Pace','E-Pace','I-Pace','F-Type']},
+  'มิตซูโอกะ': { en:'Mitsuoka', models:['Buddy','Viewt','Rock Star','Himiko']},
+  'ฟอลคอน': { en:'Foton', models:['Tunland','View CS2','Gratour','Aumark']},
+  'ทาทา': { en:'Tata', models:['Xenon','Super Ace','Ultra']},
+  'ฮีโน่': { en:'Hino', models:['XZU','FC','FG','FL','300 Series','500 Series']},
+  'ยามาฮ่า': { en:'Yamaha', models:['Fino','Grand Filano','NMAX','Aerox','XMAX','Exciter','Finn','Mio','QBIX','Tricity','Nouvo','TMAX','MT-15','R15']},
+  'ฮอนด้า (จยย.)': { en:'Honda Motorcycle', models:['Wave 110i','Wave 125i','Scoopy','Click 125i','Click 160','PCX 160','Forza 350','ADV 350','CBR150R','CB150R','Giorno','Zoomer-X','Super Cub','Dream','MSX','Rebel 500','CT125']},
+  'ยานยนต์อื่น ๆ': { en:'Other', models:['ไม่ระบุรุ่น']}
+};
+
+const COLOR_LIST = [
+  'ขาว','ขาวมุก','ขาวครีม','ดำ','ดำเงา','ดำด้าน','เทา','เทาดำ','เทาเข้ม','เทาอ่อน','เทาเงิน','เงิน','บรอนซ์เงิน','บรอนซ์ทอง',
+  'แดง','แดงเลือดหมู','แดงเชอร์รี่','แดงส้ม','ชมพู','ส้ม','ส้มทองแดง','เหลือง','เหลืองมัสตาร์ด','ทอง','ทองแชมเปญ',
+  'น้ำเงิน','น้ำเงินเข้ม','ฟ้า','ฟ้าอ่อน','ฟ้าน้ำทะเล','เขียว','เขียวเข้ม','เขียวอ่อน','เขียวขี้ม้า','เขียวมะกอก',
+  'น้ำตาล','น้ำตาลเข้ม','น้ำตาลอ่อน','ครีม','เบจ','ม่วง','ม่วงเข้ม','ไวน์แดง','ดำ-ขาว (ทูโทน)','ขาว-ดำ (ทูโทน)','อื่น ๆ'
+];
+
+/* ---------- ระบบ Dropdown ----------
+   ใช้ <select> แทน <input list=datalist> เพราะ datalist ไม่แสดงผลบน Safari/iOS หลายเวอร์ชัน
+   และบน Android บางรุ่นจะเป็นเพียงคำแนะนำการพิมพ์ ไม่ใช่รายการให้เลือกจริง
+   ทุกช่องมีตัวเลือก "อื่น ๆ (ระบุเอง)" เพื่อไม่ให้ผู้ใช้ติดตันเมื่อไม่มีค่าที่ต้องการในรายการ */
+const OTHER = '__other__';
+
+function fillSel(sel, items, placeholder){
+  sel.innerHTML = `<option value="">${esc(placeholder)}</option>` +
+    items.map(it => {
+      const v = typeof it === 'string' ? it : it.v;
+      const t = typeof it === 'string' ? it : (it.t || it.v);
+      return `<option value="${esc(v)}">${esc(t)}</option>`;
+    }).join('') +
+    `<option value="${OTHER}">อื่น ๆ (ระบุเอง)</option>`;
+}
+
+/* อ่านค่าจริงของช่อง: ถ้าเลือก "อื่น ๆ" ให้ใช้ค่าที่พิมพ์เอง */
+function selVal(key){
+  const sel = document.getElementById('s_' + key);
+  const oth = document.getElementById('f_' + key);
+  if(!sel) return oth ? oth.value.trim() : '';
+  return sel.value === OTHER ? (oth ? oth.value.trim() : '') : sel.value.trim();
+}
+/* เขียนค่าลงช่อง: ถ้าค่าไม่มีในรายการ ให้สลับไปโหมด "อื่น ๆ" อัตโนมัติ
+   จำเป็นสำหรับหน้าแก้ไขข้อมูลเก่าที่ผู้ใช้เคยพิมพ์ชื่อรุ่นแปลก ๆ ไว้ */
+function setSelVal(key, value){
+  const sel = document.getElementById('s_' + key);
+  const oth = document.getElementById('f_' + key);
+  const v = String(value == null ? '' : value).trim();
+  if(!sel){ if(oth) oth.value = v; return; }
+  const hit = Array.from(sel.options).some(o => o.value === v && v !== '');
+  if(hit){ sel.value = v; if(oth){ oth.value = ''; oth.style.display = 'none'; } }
+  else if(v){ sel.value = OTHER; if(oth){ oth.value = v; oth.style.display = ''; } }
+  else { sel.value = ''; if(oth){ oth.value = ''; oth.style.display = 'none'; } }
+  sel.dispatchEvent(new Event('change', { bubbles:false }));
+}
+/* ผูก select กับช่องพิมพ์เอง */
+function bindSel(key, onChange){
+  const sel = document.getElementById('s_' + key);
+  const oth = document.getElementById('f_' + key);
+  if(!sel) return;
+  const sync = () => {
+    if(oth) oth.style.display = (sel.value === OTHER) ? '' : 'none';
+    if(sel.value !== OTHER && oth) oth.value = '';
+    const f = sel.closest('.field'); if(f) f.classList.remove('invalid');
+    if(typeof onChange === 'function') onChange(sel.value);
+  };
+  sel.addEventListener('change', sync);
+  sync();
+}
+
+/* เติมตัวเลือกทั้งหมด + ให้รายการรุ่นเปลี่ยนตามยี่ห้อที่เลือก */
+function initVehicleSelects(){
+  const brands = Object.keys(VEHICLE_DB).map(k => ({ v:k, t:k + ' (' + VEHICLE_DB[k].en + ')' }));
+  fillSel(document.getElementById('s_brand'), brands, '— เลือกยี่ห้อ —');
+  fillSel(document.getElementById('s_color'), COLOR_LIST, '— เลือกสี —');
+
+  const mSel = document.getElementById('s_model');
+  function fillModels(brand){
+    const key = VEHICLE_DB[brand] ? brand : null;
+    const models = key ? VEHICLE_DB[key].models : [];
+    const keep = mSel.value;
+    fillSel(mSel, models, key ? '— เลือกรุ่น —' : '— กรุณาเลือกยี่ห้อก่อน —');
+    // คงค่าเดิมไว้ถ้ารุ่นนั้นยังอยู่ในยี่ห้อใหม่ (เช่นผู้ใช้แก้ยี่ห้อแล้วกลับมาเลือกเดิม)
+    if(keep && Array.from(mSel.options).some(o => o.value === keep)) mSel.value = keep;
+    const oth = document.getElementById('f_model');
+    if(oth) oth.style.display = (mSel.value === OTHER) ? '' : 'none';
+  }
+  bindSel('brand', fillModels);
+  bindSel('model');
+  bindSel('color');
+  bindSel('floor');
+  bindSel('prov');
+  fillModels(document.getElementById('s_brand').value);
+}
+
+const FLOORS = ['ชั้น B','ชั้น G','ชั้น 1','ชั้น 2','ชั้น 3','ชั้น 4','ชั้น 5','ลานจอดรถ'];
+
+/* ---------- 13) เริ่มต้นระบบ ---------- */
+function init(){
+  initTheme();
+  $('#splashLogo').innerHTML = LOGO_SVG;
+  $('#heroLogo').innerHTML   = LOGO_SVG;
+  fillSel($('#s_floor'), FLOORS, '— เลือกชั้น —');
+  fillSel($('#s_prov'), PROVINCES, '— เลือกจังหวัด —');
+  initVehicleSelects();
+  bindUpload('card','f_card','upCard','thCard','txCard','clrCard','บัตรพนักงาน');
+  bindUpload('reg','f_reg','upReg','thReg','txReg','clrReg','สำเนาทะเบียนรถยนต์');
+  clearForm();
+  initPWA();
+  setConn('on', 'พร้อมใช้งาน');
+
+  setTimeout(() => {
+    if(locked) return;
+    $('#splash').classList.add('hide');
+    $('#app').classList.add('show');
+    resetIdle();
+  }, CONFIG.SPLASH_MS);
+}
+/* กัน error ซ้ำ ๆ ยิง toast รัวจนบังหน้าจอ (เช่นเน็ตหลุดแล้วมีหลายคำขอล้มพร้อมกัน) */
+let lastErrMsg = '', lastErrAt = 0;
+function reportError(msg){
+  const now = Date.now();
+  if(msg === lastErrMsg && now - lastErrAt < 5000) return;
+  lastErrMsg = msg; lastErrAt = now;
+  toast('err','เกิดข้อผิดพลาด', msg);
+}
+window.addEventListener('unhandledrejection', e => {
+  console.error(e.reason);
+  reportError((e.reason && e.reason.message) || 'กรุณาลองใหม่อีกครั้ง');
+});
+window.addEventListener('error', e => {
+  console.error(e.error || e.message);
+  if(e.message && /Script error/i.test(e.message)) return;   // error จาก CDN ข้ามโดเมน อ่านรายละเอียดไม่ได้อยู่แล้ว
+  reportError('ระบบทำงานผิดพลาด: ' + (e.message || 'ไม่ทราบสาเหตุ'));
+});
+window.addEventListener('online',  () => setConn('on','กลับมาออนไลน์แล้ว'));
+window.addEventListener('offline', () => { setConn('off','ออฟไลน์ — ยังส่งข้อมูลไม่ได้'); toast('warn','ขาดการเชื่อมต่ออินเทอร์เน็ต','ข้อมูลที่กรอกไว้ยังอยู่ครบ กรุณาส่งใหม่เมื่อสัญญาณกลับมา'); });
+init();
+
+</script>
+</body>
+</html>
