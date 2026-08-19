@@ -399,6 +399,90 @@ html[data-theme="dark"] .plate{background:linear-gradient(135deg,#F4F7FC,#D8E2F0
 @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 @media print{#splash,.top-actions,.form-card,.filter-bar,.row-act{display:none!important}}
 
+/* ============================================================
+   Dropdown — เขียนรวมไว้ที่เดียวและอยู่ท้ายสุดของสไตล์ชีต
+   สาเหตุที่ลูกศรเคยเพี้ยนเป็นลายซิกแซก: กฎของ Dark Mode ใช้ background: แบบย่อ
+   ซึ่งรีเซ็ต background-size/repeat ทิ้งทั้งหมด ภาพลูกศรจึงถูกยืดและปูซ้ำเต็มช่อง
+   จึงต้องกำหนด size/repeat/position ให้ครอบคลุมทั้งสองโหมดพร้อมกัน
+   ============================================================ */
+.field select,
+html[data-theme="dark"] .field select{
+  appearance:none;-webkit-appearance:none;-moz-appearance:none;cursor:pointer;
+  background-repeat:no-repeat;
+  background-position:right 14px center;
+  background-size:12px 8px;
+  padding-right:40px;
+  color:var(--txt);
+  font-family:var(--font);
+  font-size:15.5px;
+  font-weight:500;
+  text-overflow:ellipsis;
+}
+.field select{
+  background-color:var(--surface-solid);
+  background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%230B2447' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+html[data-theme="dark"] .field select{
+  background-color:rgba(8,20,40,.85);
+  background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23FFD75E' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+/* สีตัวอักษรในรายการที่กางออก — บน Windows/Android รายการใช้สีของระบบ
+   ถ้าไม่กำหนดเอง จะกลายเป็นตัวอักษรขาวบนพื้นขาวในโหมดมืด */
+.field select option{
+  background-color:#FFFFFF;color:#0B2447;
+  font-family:var(--font);font-size:15px;padding:10px;
+}
+html[data-theme="dark"] .field select option{
+  background-color:#12263F;color:#F4F7FC;
+}
+.field select option[value=""]{color:#8A99AE}
+html[data-theme="dark"] .field select option[value=""]{color:#8DA1BF}
+/* ยังไม่ได้เลือก → ตัวอักษรจางลงเพื่อสื่อว่าเป็นข้อความชี้แนะ */
+.field select.is-empty{color:var(--txt-3);font-weight:400}
+.field select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 4px rgba(242,169,0,.18)}
+.field.invalid select{border-color:var(--err);box-shadow:0 0 0 4px rgba(192,57,43,.14)}
+.other-in{margin-top:8px}
+
+/* ============================================================
+   หน้า Splash / พักหน้าจอ — จัดกึ่งกลางทั้งแนวตั้งและแนวนอน
+   ใช้ container เดียวคุมความกว้างและระยะห่าง แทนการตั้ง margin ทีละชิ้น
+   ============================================================ */
+#splash{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:0;text-align:center;
+  padding:32px 24px calc(32px + env(safe-area-inset-bottom));
+}
+/* คุมเฉพาะความกว้างสูงสุด ห้ามใส่ width:100% เพราะจะไปยืดโลโก้ให้เต็มกล่อง
+   (selector ที่มี #id มีน้ำหนักสูงกว่ากฎขนาดโลโก้ จึงชนะและทำให้ภาพบานออก) */
+#splash > *{position:relative;z-index:2;max-width:520px}
+/* ขนาดโลโก้หน้า Splash — แก้ค่าเดียวตรงนี้ได้เลยถ้าต้องการปรับ */
+#splash .splash-logo{width:150px;height:150px;flex:0 0 auto;margin:0 auto}
+.splash-title{margin-top:22px;margin-bottom:0;line-height:1.35}
+.splash-sub{margin-top:10px;padding:0;line-height:1.7}
+.splash-dept{margin-top:10px}
+.splash-bar{margin:26px auto 0}
+#splash .lock-only{margin-top:4px}
+.btn-unlock{margin-top:26px}
+.lock-note{margin-top:14px;padding:0;line-height:1.75;max-width:340px;margin-left:auto;margin-right:auto}
+@media(max-width:520px){
+  .splash-title{margin-top:18px}
+  .splash-bar{margin-top:22px;width:min(200px,64vw)}
+  .lock-note{font-size:12.5px}
+}
+@media(max-height:520px){    /* มือถือแนวนอน — ลดระยะห่างไม่ให้ล้นจอ */
+  .splash-title{margin-top:12px}
+  .splash-bar{margin-top:16px}
+}
+
+/* กล่องปุ่มปลดล็อก — บังคับจัดกึ่งกลางด้วย flex แทนการพึ่ง text-align */
+#splash .lock-only{display:none}
+#splash.locked .lock-only{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;width:100%;margin:0 auto;text-align:center;
+}
+#splash.locked .btn-unlock{margin:22px auto 0;display:block}
+#splash.locked .lock-note{margin:0 auto;max-width:330px;text-align:center}
+
 /* ---- เฉพาะแอปฟอร์ม ---- */
 #app{max-width:900px;padding-bottom:110px}
 
@@ -412,14 +496,6 @@ html[data-theme="dark"] .plate{background:linear-gradient(135deg,#F4F7FC,#D8E2F0
 .hero .place{color:var(--txt-3);font-size:12.5px;margin-top:2px;line-height:1.6}
 .hero .rule{color:var(--warn);font-weight:600}
 .hero-act{display:flex;align-items:center;gap:8px;flex-shrink:0}
-
-/* dropdown ให้หน้าตาเหมือนกันทุกแพลตฟอร์ม (iOS/Android จะ render select เองถ้าไม่ตั้ง appearance) */
-.field select{appearance:none;-webkit-appearance:none;-moz-appearance:none;cursor:pointer;
-  background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237A8AA3' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:right 14px center;background-size:12px;padding-right:38px}
-html[data-theme="dark"] .field select{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238DA1BF' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
-.field select:invalid,.field select option[value=""]{color:var(--txt-3)}
-.other-in{margin-top:8px}
 
 /* หมวดย่อยในฟอร์ม — แบ่งกลุ่มให้กรอกทีละส่วน อ่านง่ายกว่ากองรวมกัน 13 ช่อง */
 .fsec{margin-bottom:24px}
@@ -1321,6 +1397,7 @@ const COLOR_LIST = [
 const OTHER = '__other__';
 
 function fillSel(sel, items, placeholder){
+  if(!sel) return;
   sel.innerHTML = `<option value="">${esc(placeholder)}</option>` +
     items.map(it => {
       const v = typeof it === 'string' ? it : it.v;
@@ -1328,6 +1405,7 @@ function fillSel(sel, items, placeholder){
       return `<option value="${esc(v)}">${esc(t)}</option>`;
     }).join('') +
     `<option value="${OTHER}">อื่น ๆ (ระบุเอง)</option>`;
+  sel.classList.toggle('is-empty', !sel.value);
 }
 
 /* อ่านค่าจริงของช่อง: ถ้าเลือก "อื่น ๆ" ให้ใช้ค่าที่พิมพ์เอง */
@@ -1356,6 +1434,7 @@ function bindSel(key, onChange){
   const oth = document.getElementById('f_' + key);
   if(!sel) return;
   const sync = () => {
+    sel.classList.toggle('is-empty', !sel.value);   // ยังไม่เลือก → ตัวอักษรจางเหมือน placeholder
     if(oth) oth.style.display = (sel.value === OTHER) ? '' : 'none';
     if(sel.value !== OTHER && oth) oth.value = '';
     const f = sel.closest('.field'); if(f) f.classList.remove('invalid');
