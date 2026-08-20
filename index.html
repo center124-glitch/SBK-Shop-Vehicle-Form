@@ -593,6 +593,24 @@ img, svg, canvas{ max-width:100%; }
 .hero .rule{color:var(--warn);font-weight:600}
 .hero-act{display:flex;align-items:center;gap:8px;flex-shrink:0}
 
+/* กล่องเงื่อนไขการลงทะเบียน — วางใต้ Header ให้อ่านก่อนเริ่มกรอก */
+.terms{padding:16px 18px;margin-bottom:16px;border-left:4px solid var(--gold)}
+.terms-head{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+.terms-ic{font-size:17px;line-height:1}
+.terms-head h2{font-size:15.5px;font-weight:700;line-height:1.45}
+.terms-list{list-style:none;display:flex;flex-direction:column;gap:9px}
+.terms-list li{position:relative;padding-left:20px;font-size:14px;line-height:1.7;color:var(--txt-2)}
+.terms-list li::before{content:"";position:absolute;left:5px;top:11px;width:6px;height:6px;border-radius:50%;
+  background:var(--gold)}
+.terms-list li b{color:var(--txt);font-weight:600}
+.warn-line{display:block;margin-top:3px;font-size:13px;font-weight:600;color:var(--err);line-height:1.6}
+@media(max-width:600px){
+  .terms{padding:14px 15px}
+  .terms-head h2{font-size:14.5px}
+  .terms-list li{font-size:13.5px;padding-left:18px}
+  .warn-line{font-size:12.5px}
+}
+
 /* หมวดย่อยในฟอร์ม — แบ่งกลุ่มให้กรอกทีละส่วน อ่านง่ายกว่ากองรวมกัน 13 ช่อง */
 .fsec{margin-bottom:24px}
 .fsec:last-of-type{margin-bottom:6px}
@@ -697,6 +715,21 @@ img, svg, canvas{ max-width:100%; }
       <button class="icon-btn" id="btnLock" title="ล้างข้อมูลและออกจากแบบฟอร์ม">🔒</button>
     </div>
   </header>
+
+  <section class="terms glass" id="termsBox">
+    <div class="terms-head">
+      <span class="terms-ic">📋</span>
+      <h2>เงื่อนไขสำหรับการลงทะเบียนเข้าจอดรถยนต์</h2>
+    </div>
+    <ul class="terms-list">
+      <li>สิทธิการลงทะเบียน <b>1 คน / 1 คัน</b> เท่านั้น</li>
+      <li><b>ไม่สามารถจอดรถยนต์ค้างคืนได้</b>
+        <span class="warn-line">กรณีจอดรถค้างคืน มีค่าปรับคืนละ 1,000 บาท / คืน</span></li>
+      <li>แนบบัตรพนักงานร้านค้าที่ทางศูนย์ฯ ออกให้ <b>เท่านั้น</b> (ที่ยังไม่หมดอายุ)
+        <span class="warn-line">ถ้าแนบบัตรที่หมดอายุมา จะไม่สามารถเข้าจอดได้</span></li>
+      <li>แนบสำเนารถยนต์หรือเอกสารรถยนต์ <b>(เท่านั้น)</b></li>
+    </ul>
+  </section>
 
   <section class="card glass" id="formCard">
     <form id="vForm" autocomplete="off" novalidate>
@@ -805,7 +838,7 @@ img, svg, canvas{ max-width:100%; }
               <div class="uic">🪪</div>
               <img class="thumb" id="thCard" alt="ตัวอย่างบัตรพนักงาน">
               <div class="utx"><b id="txCard">แตะเพื่อถ่ายภาพ / เลือกไฟล์</b>
-                บัตรที่ทางศูนย์ฯออกให้เท่านั้น(ที่ยังไม่หมดอายุ)</div>
+                บัตรที่ศูนย์ฯ ออกให้และยังไม่หมดอายุเท่านั้น</div>
               <button type="button" class="clr" id="clrCard" title="ลบไฟล์">✕</button>
             </div>
             <span class="err-msg">กรุณาแนบภาพบัตรพนักงาน</span>
@@ -1306,11 +1339,16 @@ function validate(){
     setInvalid('f_plate', true, 'รูปแบบทะเบียนไม่ถูกต้อง เช่น 1กก 1234 / กข 4567'); ok = false;
   }else setInvalid('f_plate', false);
 
-  [['card','upCard'],['reg','upReg']].forEach(([k, boxId]) => {
-    const has = !!FILES[k];
+  // เอกสารแนบเป็นเงื่อนไขบังคับตามประกาศ — ไม่แนบครบทั้ง 2 รายการจะไม่บันทึกข้อมูล
+  const missDoc = [];
+  [['card','upCard','ภาพบัตรพนักงาน'],['reg','upReg','สำเนาทะเบียนรถยนต์']].forEach(([k, boxId, label]) => {
+    const has = !!(FILES[k] && FILES[k].data);
     $('#'+boxId).closest('.field').classList.toggle('invalid', !has);
-    if(!has) ok = false;
+    if(!has){ ok = false; missDoc.push(label); }
   });
+  if(missDoc.length){
+    toast('err','ต้องแนบเอกสารให้ครบ', 'ยังไม่ได้แนบ: ' + missDoc.join(' และ ') + ' — ระบบจะไม่บันทึกข้อมูลจนกว่าจะแนบครบ');
+  }
 
   if(!ok){
     toast('warn','ข้อมูลไม่ครบถ้วน','กรุณาตรวจสอบช่องที่มีกรอบสีแดงแล้วส่งอีกครั้ง');
@@ -1345,7 +1383,9 @@ function clearForm(){
 }
 function showForm(){
   $('#done').classList.remove('show');
+  $('#termsBox').style.display = '';
   $('#formCard').style.display = '';
+  $('#termsBox').style.display = '';
   $('#submitBar').style.display = '';
   clearForm();
   window.scrollTo({ top:0, behavior:'smooth' });
@@ -1359,6 +1399,7 @@ function onLock(){
   clearForm();
   $('#done').classList.remove('show');
   $('#formCard').style.display = '';
+  $('#termsBox').style.display = '';
   $('#submitBar').style.display = '';
 }
 function onUnlock(){ $('#f_ts').value = nowLocalISO(); }
@@ -1388,6 +1429,14 @@ async function submitForm(){
     color   : selVal('color'),
     cardImg : '', regImg : ''
   };
+  if(!FILES.card || !FILES.card.data || !FILES.reg || !FILES.reg.data){
+    // ตรวจซ้ำก่อนส่งจริง เผื่อไฟล์ถูกล้างระหว่างทาง (เช่นผู้ใช้กดลบไฟล์หลังผ่าน validate)
+    toast('err','ไม่สามารถส่งข้อมูลได้','กรุณาแนบภาพบัตรพนักงานและสำเนาทะเบียนรถยนต์ให้ครบทั้ง 2 รายการ');
+    submitting = false; suspendIdle(false);
+    btn.classList.remove('loading'); btn.disabled = false;
+    $('#saveTxt').textContent = 'ส่งข้อมูลลงทะเบียน';
+    return;
+  }
   const files = { card: FILES.card.data, reg: FILES.reg.data };
 
   try{
@@ -1410,6 +1459,7 @@ async function submitForm(){
       `<div><b>ร้านค้า</b> ${esc(payload.shop)} · ${esc(payload.room)} ${esc(payload.floor)}</div>` +
       `<div><b>รถ</b> ${esc(payload.brand)} ${esc(payload.model)} สี${esc(payload.color)}</div>`;
     $('#formCard').style.display = 'none';
+    $('#termsBox').style.display = 'none';
     $('#submitBar').style.display = 'none';
     $('#done').classList.add('show');
     setConn('on', 'ส่งข้อมูลสำเร็จ');
